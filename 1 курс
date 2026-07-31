@@ -1,0 +1,29 @@
+Исходные данные – файл, содержащий текст на английском язы- ке. Определить, какие символы и сколько раз встречаются в тексте.
+Код программы:
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+int main() {
+	char logo[] =
+		"************************************************\n"
+		"* Nizhny Novgorog State Technical University   *\n"
+		"* Study work number 5.                         *\n"
+		"* Performed student 21-IVT-3 Sychev E. S.      *\n"
+		"************************************************\n";
+	cout << logo;
+	int counter[255]{0};
+	ifstream in("in.txt");
+
+	unsigned char c; 
+	in >> c;
+	while (in >> c) {
+		++counter[c];
+	}
+	for (unsigned char i = 0; i < 255; ++i) {
+		if (counter[i] > 0) { 
+			cout << '\'' << i << "': " << counter[i] <<endl;
+		}
+	}
+	return 0;
+}
