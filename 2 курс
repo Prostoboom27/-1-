@@ -1,0 +1,1137 @@
+Задание: Сделать определённый элемент в списке первым
+
+Код программы:
+#include<iostream>
+#include<list>
+#include<string>
+using namespace std;
+
+template <typename T>
+class List
+{
+public:
+
+	List();
+	~List();
+
+	void push_back(T data);   //метод добавляет в конец списка элемент 
+	
+	int getSize()             //показывает количество элементов в списке 
+	{
+		return Size;
+	}
+
+	T& operator[](const int index);   //Перегрузка [] (по указанному индексу возвращает нам этот элемент)
+	void pop_front();                 //Удаление элемента в начале списка
+	void push_front(T data);          //Добавление элемента в начало списка
+	void insert(T value, int index);  //Добавить элемент в какое-то место
+	void removeAt(int index);         //Удаление любого элемента в списке
+
+
+
+private:
+	// Первый элемент
+	template <typename T>  // Шаблонный класс Node
+	class Node
+	{
+	public:
+		Node* pNext;
+		T data;
+
+		Node(T data = T(), Node* pNext = nullptr)    // Конструктор в который передаются данные и указатель на следующий элемент ( По умолчанию nullprt)
+		{
+			this->data = data;
+			this->pNext = pNext;
+		}
+
+	};
+
+	int Size;         //Количество элементов
+	Node <T> *head;   //Первый элемент в списке
+
+};
+
+template <typename T>            //конструктор 
+List<T>::List()
+{
+	Size = 0;                   //количество элементов 
+	head = nullptr;             //указывает на самый первый элемент в списке
+}
+
+template <typename T>
+List<T>::~List()
+{
+
+}
+
+
+template <typename T>
+void List<T>::push_back(T data)
+{
+	if(head == nullptr)
+	{
+		head = new Node<T>(data);
+	}
+	else
+	{
+		Node<T> *current = this->head;
+		while (current->pNext != nullptr)
+		{
+			current = current->pNext;
+		}
+		current->pNext = new Node<T>(data);
+	}
+	Size++;
+}
+
+ template<typename T>
+ T& List<T>::operator[](const int index)
+ {
+	 int counter = 0;
+	 Node<T>* current = this->head;
+	 while (current != nullptr)
+	 {
+		 if (counter == index)
+		 {
+			 return current->data;
+		 }
+		 current = current->pNext;
+		 counter++;
+	 }
+ }
+
+ template<typename T>
+ void List<T>::pop_front()
+ {
+	 Node<T> *temp = head;       //Запоминаем адрес 
+
+	 head = head->pNext;
+
+	 delete temp;
+
+	 Size--;
+ }
+
+ template<typename T>
+ void List<T>::push_front(T data)
+ {
+	 head = new Node<T>(data, head);
+	 Size++;
+ }
+
+ template<typename T>
+ void List<T>::insert(T data, int index)
+ {
+	 if (index == 0)                           //Если индекс равен 0
+	 {                                         //То мы используем метод push_front()
+		 push_front(data);                    //Чтобы добавить элемент в начало списка
+	 } 
+	 else
+	 {
+
+		 Node<T>* previous = this->head;        //Временный указатель на начало списка
+
+		 for (int i = 0; i < index - 1; i++)
+		 {
+			 previous = previous->pNext;        // Найти элемент с индексом предшествующем индексу на место которого мы хотим поместить объект
+		 }
+		 Node<T>* newNode = new Node<T>(data, previous->pNext);   
+		 previous->pNext = newNode;
+
+		 Size++;
+	 }
+ }
+
+ template<typename T>
+ void List<T>::removeAt(int index)
+ {
+	 if (index == 0)
+	 {
+		 pop_front();
+	 }
+	 else
+	 {
+		 Node<T>* previous = this->head;        
+
+		 for (int i = 0; i < index - 1; i++)
+		 {
+			 previous = previous->pNext;        
+		 }
+
+		 Node<T>* toDelite = previous->pNext;  //  toDelite храним адрес на тот элемент который хотим удалить 
+
+		 previous->pNext = toDelite->pNext;
+
+		 delete toDelite;    // Удаляем данные старого элемента 
+
+		 Size--;
+	 }
+ }
+
+int main()
+{
+	setlocale(LC_ALL, "Russian");
+	int a;
+	List <int> lst;
+	lst.push_back(5);
+	lst.push_back(45);
+	lst.push_back(12);
+	lst.push_back(89);
+	lst.push_back(105);
+
+	for (int i = 0; i < lst.getSize(); i++)
+	{
+		cout << lst[i] << endl;
+	}
+
+	cout << "Введите номер строки, который хотите переместить на первое место в списке: " << endl;
+
+		cin >> a;
+
+
+	lst.insert(lst[a], 0);
+
+	a = a + 1;
+
+	lst.removeAt(a);
+
+	cout << "Ваши числа!" << endl;
+
+	for (int i = 0; i < lst.getSize(); i++)
+	{
+		cout << lst[i] << endl;
+	}
+
+	return 0;
+}
+
+
+Задание: Дана разреженная квадратная матрица (CS). Повернуть матрицу на 90 градусов.
+ Код программы:
+#include<iostream>
+
+//Узел для представления разреженной матрицы
+class Node
+{
+public:
+    int value;
+    int row_index;
+    int index_j_column;
+    class Node* next;
+    void create_new_node(Node** start, int non_zero_element, int row_index, int column_index);
+};
+
+//Функция для создания нового узла
+void create_new_node(class Node** start, int non_zero_element, int row_index, int column_index)
+{
+    Node* temp, * newNode;
+    temp = *start;
+
+    if (temp == NULL)
+    {
+        // Динамически создается новый узел
+        temp = (class Node*)malloc(sizeof(class Node));
+        temp->value = non_zero_element;
+        temp->row_index = row_index;
+        temp->index_j_column = column_index;
+        temp->next = NULL;
+        *start = temp;
+    }
+    else
+    {
+        while (temp->next != NULL) temp = temp->next;
+
+        newNode = (class Node*)malloc(sizeof(class Node));
+        newNode->value = non_zero_element;
+        newNode->row_index = row_index;
+        newNode->index_j_column = column_index;
+        newNode->next = NULL;
+        temp->next = newNode;
+    }
+}
+
+// функция выводит содержимое связанного списка
+void PrintList(class Node* start) {
+    Node* temp, * newNode, * s;
+    temp = newNode = s = start;
+    std::cout << "Индекс строки: ";
+    //Проверяем значение на не нулевой элимент 
+    while (temp != NULL)
+    {
+        std::cout << temp->row_index;
+
+        temp = temp->next;
+    }
+
+    std::cout << "\n";
+    std::cout << "Индекс j столбца: ";
+
+    while (newNode != NULL)
+    {
+        std::cout << newNode->index_j_column;
+
+        newNode = newNode->next;
+    }
+
+    std::cout << "\n";
+    std::cout << "Ценность: ";
+
+    while (s != NULL)
+    {
+        std::cout << s->value;
+
+        s = s->next;
+    }
+    std::cout << "\n";
+}
+
+void Matrix_Converter() {
+    // Исходная разреженная матрица
+    int sparseMatric[5][5];
+
+    std::cout << "Заполните матрицу: " << std::endl;
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 5; j++)
+        {
+            std::cin >> sparseMatric[i][j];
+        }
+        std::cout << std::endl;
+    }
+
+    //Для хранения новой перевернутой матрицы
+    int sparseMatric2[5][5];
+
+    class Node* start = NULL;
+    std::cout << "Ваша матрица:\n\n";
+    for (int i = 0; i < 5; i++) {
+
+        for (int j = 0; j < 5; j++) {
+            // Передаем только те значения, которые не равны нулю
+            std::cout << sparseMatric[i][j] << "   ";
+            if (sparseMatric[i][j] != 0) create_new_node(&start, sparseMatric[i][j], i, j);
+        }
+        std::cout << "\n\n";
+    }
+    //Вывод содержимого матрицы
+    PrintList(start);
+
+    //Переворачиваем матрицу на 90 градусов 
+    for (int i = 0; i < 5; i++) {
+        for (int j = 0; j < 5; j++) {
+
+            sparseMatric2[i][j] = sparseMatric[j][4 - i];
+        }
+    }
+    //Обнуляем переменную start
+    start = NULL;
+    std::cout << "\n\n";
+    std::cout << "Переделанная матрица:\n\n";
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 5; j++)
+        {
+            // Передаем только те значения, которые не равны нулю, у перевернутой матрицы 
+            if (sparseMatric2[i][j] != 0)
+
+                create_new_node(&start, sparseMatric2[i][j], i, j);
+
+            std::cout << sparseMatric2[i][j] << "   ";
+        }
+        std::cout << "\n\n";
+    }
+    //Вывод содержимого матрицы
+    PrintList(start);
+    std::cout << "\n\n";
+}
+
+int main()
+{
+    setlocale(LC_ALL, "ru");
+    // Вызываем основную функцию преобразования матрицы
+    Matrix_Converter();
+    return 0;
+}
+
+Задание: Дано бинарное дерево. Кроме того все вершины имеют цвет. Всего 3 цвета (белый, черный и желтый). Из множества листьев имеющих желтый цвет удалить самые далекие от корня, если таковых нет, то из множества листьев имеющих черных или белый цвет удалить самые близкие от корня.
+ 
+Код программы:
+#define _CRT_SECURE_NO_WARNINGS 
+//Задача 28. Дано бинарное дерево. Кроме того все вершины имеют цвет. 
+//Всего 3 цвета (белый, черный и желтый). 
+//Из множества листьев имеющих желтый цвет удалить самые далекие от корня, если таковых нет, 
+//то из множества листьев имеющих черных или белый цвет удалить самые близкие от корня.
+#include <iostream>
+#include <stdio.h>
+
+struct tree {
+    int key;
+    int colors;
+    struct tree* left;
+    struct tree* right;
+};
+
+struct tree* createtree(int word, int key)
+{
+    struct tree* elem = new struct tree;
+    elem->colors = word;
+    elem->key = key;
+    elem->left = NULL;
+    elem->right = NULL;
+    return elem;
+}
+
+void inserttree(struct tree* root, struct tree* el)
+{
+    if (el->key < root->key)
+    {
+        if (root->left == NULL) { root->left = el; }
+        else { inserttree(root->left, el); }
+    }
+    else {
+        if (root->right == NULL) { root->right = el; }
+        else { inserttree(root->right, el); }
+    }
+
+
+}
+
+void proverka(struct tree* root, int lvl, int maxlevel, bool& bol)
+{
+
+    if (root->left != NULL) {
+        proverka(root->left, lvl + 1, maxlevel, bol);
+    }
+    if (root->right != NULL) {
+        proverka(root->right, lvl + 1, maxlevel, bol);
+    }
+
+    if (lvl + 1 == maxlevel && root->colors == 3) { bol = true; }
+
+}
+
+struct tree* deleteLeaves(struct tree* root, int lvl, int maxlevel)
+{
+    struct tree* tmp;
+    bool bol = false;
+    if (root == NULL) { return root; }
+    proverka(root, lvl, maxlevel, bol);
+    if (root->left != NULL) {
+        deleteLeaves(root->left, lvl + 1, maxlevel);
+    }
+    if (root->right != NULL) {
+        deleteLeaves(root->right, lvl + 1, maxlevel);
+    }
+
+    if (bol == true) {
+
+        if (lvl + 1 == maxlevel && root->colors == 3) {
+            if (root->left == NULL && root->right == NULL)
+            {
+                tree* temp = root;
+                root->colors = NULL;
+                return temp;
+            }
+
+        }
+    }
+    else {
+        if (((maxlevel - (lvl + 1)) == 1 && root->colors == 1) || ((maxlevel - (lvl + 1)) == 1 && root->colors == 2)) {
+            if (root->left == NULL && root->right == NULL)
+            {
+                tree* temp = root;
+                root->colors = NULL;
+                return temp;
+            }
+        }
+    }
+    return root;
+}
+
+void findLevel(struct tree* leaves, int level, int& maxlevel)
+{
+    if (leaves != NULL)
+    {
+        findLevel(leaves->left, ++level, maxlevel);
+
+
+        if (level > maxlevel)
+        {
+            maxlevel = level;
+        }
+        findLevel(leaves->right, level, maxlevel);
+    }
+}
+
+void FreeTree(struct tree* root) {
+    if (root->left != NULL)   FreeTree(root->left);
+    if (root->right != NULL)  FreeTree(root->right);
+    delete root;
+}
+
+void printBT(const std::string& prefix, const tree* node, bool isLeft)
+{
+    if (!node) return;
+    if (node != NULL)
+    {
+        std::cout << prefix;
+
+        std::cout << (isLeft ? "|---" : "L---");
+        //std::cout << node->colors<<std::endl;
+
+        if (node->colors == 1) { printf("Белый\n"); }
+        if (node->colors == 2) { printf("Черный\n"); }
+        if (node->colors == 3) { printf("Желтый\n"); }
+        printBT(prefix + (isLeft ? "|   " : "    "), node->right, true);
+        printBT(prefix + (isLeft ? "|   " : "    "), node->left, false);
+    }
+}
+
+void printBT(const tree* node)
+{
+    printBT("", node, false);
+}
+
+void printTree(struct tree* root)
+{
+    if (root != NULL) {
+        if (root->colors == 1) { printf("Белый\n"); }
+        if (root->colors == 2) { printf("Черный\n"); }
+        if (root->colors == 3) { printf("Желтый\n"); }
+        printTree(root->left);
+        printTree(root->right);
+    }
+}
+
+int indexcolor(char color)
+{
+    if (color == '1' || color == 'Б' || color == 'б')
+    {
+        return 1;
+    }
+    if (color == '2' || color == 'Ч' || color == 'ч')
+    {
+        return 2;
+    }
+    if (color == '3' || color == 'Ж' || color == 'ж')
+    {
+        return 3;
+    }
+    else {
+        printf("Индекс не найден");
+        exit(1);
+    }
+}
+
+void clrscr()
+{
+    system("CLS");
+}
+
+int main()
+{
+    setlocale(LC_ALL, "Russian");
+    int maxlevel = 0, level = 0, key = 0, choice = 0, index = 0;
+    char color = ' ';
+    struct tree* root = NULL;
+    struct tree* elem = NULL;
+    printf("1,Б-Белый|2,Ч-Черный|3,Ж-Желтый\n");
+    printf("Добавьте цвет в корень: ");
+    if (!scanf("%c", &color)) { printf("Ошибка"); exit(1); }
+    index = indexcolor(color);
+    printf("\nДобавить ключ в корень: ");
+    if (!scanf("%d", &key)) { printf("Ошибка"); exit(1); }
+    root = createtree(index, key);
+
+    while (true)
+    {
+        clrscr();
+        printBT(root);
+        printf("\n|1|Добавьте листья\n");
+        printf("|2|Выход\n");
+        if (!scanf("%d", &choice)) { printf("Ошибка"); exit(1); }
+        if (choice == 2) { break; }
+        if (choice == 1) {
+
+            clrscr();
+            printBT(root);
+            printf("\nДобавить цвет: ");
+            std::cin >> color;
+            index = indexcolor(color);
+            if (!color) { printf("Ошибка"); exit(1); }
+            printf("\nДобавить ключ: ");
+            if (!scanf("%d", &key)) { printf("Ошибка"); exit(1); }
+
+            elem = createtree(index, key);
+            inserttree(root, elem);
+
+        }
+    }
+
+    clrscr();
+    printBT(root);
+    printf("\n");
+    printTree(root);
+    findLevel(root, level, maxlevel);
+    root = deleteLeaves(root, level, maxlevel);
+    printf("\n");
+    printBT(root);
+    printf("\n");
+    printTree(root);
+    FreeTree(root);
+}
+
+Задание: Дано N-дерево. Найти все вершины с одинаковыми номерами.
+Код программы: 
+#include <iostream>
+
+int SIZE{ 3 }; //определяет арность дерева
+int coute = 0;
+using namespace std;
+struct Tree
+{
+	int Value; 		//значение в узле
+	int SizeChild; 	//Кол-во узлов в поддереве с корнем в данном
+	Tree** child;   //Массив потомков
+	Tree() : Value(), SizeChild(1), child(new Tree* [SIZE]) { for (int i = 0; i < SIZE; i++) child[i] = 0; }
+};
+
+class NTree
+{
+private:
+	Tree* root;						//корень дерева
+	int* Array;						//массив со всеми значениями в дереве
+	int ArrSize = 0;				//кол-во значений в дереве
+	void FindEqul(Tree* T);			//Поиск одинаковых чисел
+	int Add(char*& str, Tree*& T);	//Добавление значений в дерево
+	void PrintTree(Tree* T, int sh);//Вывод дерева
+	void FreeNTree(Tree* T);		//Удаление дерева
+	void sort(int* Arr);			//Сортировка 
+public:
+	NTree();					//Конструктор
+	~NTree();					//Диструктор
+	bool AddItems(char* str);	//Обертка для Add с проверкой на существования дерева
+	void Print();				//Обертка для PrintNTree
+	void PrintEqule();			//Вывод равных значений
+};
+
+int NTree::Add(char*& str, Tree*& T) {
+	int Count = 0; //Здесь накапливаем узлы поддерева
+	int m = 0; //Хранит значение count в поддеревьях
+	if (isdigit(*str)) {  //Если ветки не существует
+		T = new Tree(); //Создаем ее и задаем значение
+		Count = 1; 		 //Запоминаем, что в поддереве с корнем в этом узле есть 1 узел
+		do {
+			T->Value = T->Value * 10 + *str++ - '0';
+		} while (isdigit(*str));//пока в строке есть цифры добавляем их
+		for (int i = 0; i < SIZE; i++)
+		{
+			if (*str == '(' && (m = Add(++str, T->child[i])) >= 0 && *str == ')')
+			{
+				++str, Count += m;
+			}
+		}
+		return T->SizeChild = Count;
+	}
+	else if (*str == ')') return Count;
+	else return -1;
+}
+bool NTree::AddItems(char* str) {
+	int m = 0;
+	if (*str == '(')
+	{
+		m = Add(++str, root);
+		if (m == -1) return false;
+		if (*str == ')' && *++str == 0) {
+			Array = new int[root->SizeChild];
+			ArrSize = root->SizeChild;
+			return true;
+		}
+		else return false;
+	}
+	return false;
+}
+void NTree::PrintTree(Tree* T, int sh) {
+	if (!T) return;
+	for (int j = 0; j < sh; j++)
+		cout << ' ';
+	cout << T->Value << endl;
+	for (int i = 0; i < SIZE; i++)
+		PrintTree(T->child[i], sh + 5);
+}
+void NTree::Print() {
+	PrintTree(root, 0);
+	cout << endl;
+}
+void NTree::FreeNTree(Tree* T) {
+	if (!T) return;
+	for (int i = 0; i < SIZE; i++)
+	{
+		FreeNTree(T->child[i]);
+	}
+	delete T;
+	return;
+}
+void NTree::FindEqul(Tree* T) {
+	if (!T) return;
+	for (int i = 0; i < SIZE; i++)
+	{
+		FindEqul(T->child[i]);
+	}
+	Array[coute] = T->Value;
+	coute++;
+	return;
+}
+void NTree::sort(int* Arr) {
+	for (int i = 0; i < root->SizeChild; i++) {
+		for (int j = 0; j < root->SizeChild - 1; j++) {
+			if (Arr[j] > Arr[j + 1]) {
+				int temp = Arr[j]; // создали дополнительную переменную
+				Arr[j] = Arr[j + 1]; // меняем местами
+				Arr[j + 1] = temp; // значения элементов
+			}
+		}
+	}
+}
+void NTree::PrintEqule() {
+	FindEqul(root);
+	sort(Array);
+	int temp = Array[0];
+	int k = 1;
+	for (int i = 1; i <= ArrSize; i++)
+	{
+		if (i < ArrSize && Array[i] == temp)
+			k++;
+		else {
+			if (k > 1)
+				for (int j = 0; j < k; j++)
+					cout << temp << ' ';
+			if (i < ArrSize)
+			{
+				temp = Array[i];
+				k = 1;
+			}
+		}
+	}
+	cout << endl;
+}
+NTree::NTree()
+{
+	root = nullptr;
+}
+
+NTree::~NTree()
+{
+	FreeNTree(root);
+}
+
+int main() {
+	//  char s[] = "(1)";
+	// char s[] = "(1(2(3)(4)))";
+	// char s[] = "(1(2)(3)(4)(5))";
+	setlocale(LC_ALL, "Russian");
+	char s[] = "(6(9(2(1)))(3(7(8)(9)))(4))"; // дерево в виде скобочной последовательности
+	NTree test;
+	cout << "Введите кратность дерева" << endl;
+	cin >> SIZE;
+	if (test.AddItems(s)) // если дерево удачно спарсилось из скобочной последовательности
+	{
+		test.PrintEqule();
+		test.Print();
+	}
+	else
+		printf("Bad tree\n\n");
+	return 0;
+}
+
+Задание: Реализовать алгоритмы поиска, вставки, удаления элементов таблицы и распечатки таблицы и метод ре-хэширования таблицы при увеличении размера данных.
+
+28	4	3	1
+
+Код программы:
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <iostream>
+#define N 500  
+
+struct table {
+	char orignalkey[40];
+	int  hashkey;
+	table* next;
+	int size;
+};
+
+struct table* info = NULL;
+
+int makehash(char* str)
+{
+	int hash = 0, square = 0;
+	for (int i = 0; i < strlen(str) - 1; i++)
+	{
+		hash = str[i] + hash;
+	}
+	square = hash * hash;
+	return ((square >> 14) % 16384);
+}
+
+struct table* createhashtable(FILE* file, struct table* info)
+{
+	unsigned int square = 0, i = 0, hash = 0, hashkey = 0;
+	char str[40];
+	info = new struct table[N];
+	for (int i = 0; i < N; i++)
+	{
+		info[i].hashkey = NULL;
+		info[i].next = NULL;
+		strcpy(info[i].orignalkey, "");
+	}
+	while (!feof(file))
+	{
+		fgets(str, 255, file);
+		hashkey = makehash(str);
+		for (int j = 0; j < N; j++)
+		{
+			if (j == hashkey) {
+				if (info[j].hashkey != NULL)
+				{
+					struct table* p;
+					table* list = new table;
+					p = info[j].next;
+					while (p != NULL)
+					{
+						p = p->next;
+					}
+					p = info[j].next;
+					info[j].next = list;
+					list->hashkey = info[j].hashkey;
+					strcpy(list->orignalkey, str);
+					list->next = p;
+					break;
+				}
+				else {
+					strcpy(info[j].orignalkey, str);
+					info[j].hashkey = hashkey;
+					break;
+				}
+			}
+		}
+		i++;
+	}
+	info->size = i;
+	return info;
+}
+
+struct table* addelem(char str[40], struct table* info)
+{
+	int h = 0;
+	h = makehash(str);
+	if (info[h].hashkey != NULL)
+	{
+		struct table* p;
+		table* list = new table;
+		p = info[h].next;
+		while (p != NULL)
+		{
+			p = p->next;
+		}
+		p = info[h].next;
+		info[h].next = list;
+		list->hashkey = info[h].hashkey;
+		strcpy(list->orignalkey, str);
+		list->next = p;
+
+	}
+	else {
+		strcpy(info[h].orignalkey, str);
+		info[h].hashkey = h;
+	}
+	if (h > N) { printf("Элемент не добавлен!\n"); }
+	else { printf("Элемент добавлен!\n"); }
+	info->size++;
+	return info;
+}
+
+struct table* deleteelem(char str[40], struct table* info)
+{
+	int h = 0;
+	h = makehash(str);
+	info[h].hashkey = NULL;
+	strcpy(info[h].orignalkey, "");
+	if (info[h].next != NULL)
+	{
+		struct table* p;
+		p = info[h].next;
+		while (p != NULL) {
+			p->hashkey = NULL;
+			strcpy(p->orignalkey, "");
+			p = p->next;
+		}
+	}
+	if (h > N) { printf("Элемента нет в хэш-таблице!"); }
+	info->size--;
+	return info;
+}
+
+void search(char str[40], struct table* info)
+{
+
+	int h = 0;
+	h = makehash(str);
+	if (info[h].hashkey == h)
+	{
+		printf("Найденный элемент:\n");
+		printf("Code:%d | %s ", info[h].hashkey, info[h].orignalkey);
+		if (info[h].next != NULL)
+		{
+			struct table* p;
+			p = info[h].next;
+			while (p != NULL) {
+				printf(" -> Code:%d | %s ", p->hashkey, p->orignalkey);
+				p = p->next;
+			}
+		}
+	}
+	else { printf("Элемент не найден\n"); }
+}
+
+struct table* rehashing(struct table* info, char str[40])
+{
+	int h = 0;
+	h = makehash(str);
+	while (info[h].hashkey != NULL)
+	{
+		h++;
+	}
+	strcpy(info[h].orignalkey, str);
+	info[h].hashkey = h;
+	return info;
+}
+
+void printhashtable(struct table* info)
+{
+
+	for (int i = 0; i < N; i++)
+	{
+		if (info[i].hashkey == NULL)
+			continue;
+		printf("Code:%d | %s ", info[i].hashkey, info[i].orignalkey);
+		if (info[i].next != NULL)
+		{
+			struct table* p;
+			p = info[i].next;
+			while (p != NULL) {
+				printf(" -> Code:%d | %s ", p->hashkey, p->orignalkey);
+				p = p->next;
+			}
+		}
+	}
+}
+
+void menu()
+{
+	printf("*********************************************\n");
+	printf("*      1-Создать хэш-таблицу               *\n");
+	printf("*      2-Вывести хэш-таблицу               *\n");
+	printf("*      3-Найти элемент                     *\n");
+	printf("*      4-Добавить элемент                  *\n");
+	printf("*      5-Удалить элемент                   *\n");
+	printf("*      6-Ре-хэширование таблицы            *\n");
+	printf("*      7-Выход                             *\n");
+	printf("*********************************************\n");
+}
+
+int main()
+{
+	setlocale(LC_ALL, "Russian");
+	FILE* file;
+	int choice = 0;
+	while (true) {
+		system("CLS");
+		menu();
+		scanf("%d", &choice);
+		switch (choice)
+		{
+		case 1:
+		{file = fopen("data.txt", "r");
+		info = createhashtable(file, info);
+		fclose(file);
+		break; }
+		case 2:
+		{if (info == NULL) { printf("Таблица не создана!\n"); system("pause"); break; }
+		printhashtable(info);
+		system("pause");
+		break; }
+		case 3:
+		{if (info == NULL) { printf("Таблица не создана!\n"); system("pause"); break; }
+		char str1[10];
+		char str2[10];
+		char str3[10];
+		system("CLS");
+		printf("Введите элемент:");
+		scanf("%s %s %s", str1, str2, str3);
+		strcat(str1, " ");
+		strcat(str1, str2);
+		strcat(str1, " ");
+		strcat(str1, str3);
+		strcat(str1, "\n");
+		search(str1, info);
+		system("pause");
+		break; }
+		case 4:
+		{if (info == NULL) {
+			printf("Таблица не создана!\n"); system("pause"); break;
+		}
+		file = fopen("data.txt", "a");
+		char str1[10];
+		char str2[10];
+		char str3[10];
+		file = fopen("data.txt", "a");
+		system("CLS");
+		printf("Введите новый элемент:");
+		scanf("%s %s %s", str1, str2, str3);
+		strcat(str1, " ");
+		strcat(str1, str2);
+		strcat(str1, " ");
+		strcat(str1, str3);
+		fprintf(file, "\n");
+		fprintf(file, str1);
+		strcat(str1, "\n");
+		fprintf(file, "\n");
+		fprintf(file, str1);
+		info = addelem(str1, info);
+		system("pause");
+		fclose(file);
+		break; }
+		case 5:
+		{
+			if (info == NULL) { printf("Таблица не создана!\n"); system("pause"); break; }
+			char str1[10];
+			char str2[10];
+			char str3[10];
+			system("CLS");
+			printf("Введите элемент для удаления:");
+			scanf("%s %s %s", str1, str2, str3);
+			strcat(str1, " ");
+			strcat(str1, str2);
+			strcat(str1, " ");
+			strcat(str1, str3);
+			strcat(str1, "\n");
+			deleteelem(str1, info);
+			system("pause");
+			break; }
+		case 6:
+		{
+			if (info == NULL) { printf("Таблица не создана!\n"); system("pause"); break; }
+			char str1[10];
+			char str2[10];
+			char str3[10];
+			int n = 0;
+			system("CLS");
+			printf("Как много элемнтов добавить:");
+			scanf("%d", &n);
+			info = new struct table[N + n];
+			file = fopen("data.txt", "r");
+			info = createhashtable(file, info);
+			fclose(file);
+			for (int i = 0; i < n; i++)
+			{
+				printf("Введите, какой элемент нужно добавить:");
+				scanf("%s %s %s", str1, str2, str3);
+				strcat(str1, " ");
+				strcat(str1, str2);
+				strcat(str1, " ");
+				strcat(str1, str3);
+				strcat(str1, "\n");
+				info = rehashing(info, str1);
+			}
+			system("pause");
+			break; }
+		case 7:
+		{system("CLS");
+		exit(1);
+		break; }
+		default: {
+			if (!choice) { printf("Ошибка ввода!"); exit(1); }
+			printf("Неправильный выбор.Пробовать снова!\n");
+			system("pause");
+			break;
+		}
+		}
+	}
+}
+Задачние: Даны К целых чисел А(1),...,А(К). Вычислить
+а) наибольшее,
+b) наименьшее,
+c) наиболее близкое к нулю.
+Код программы:
+
+//Даны К целых чисел А(1),...,А(К). Вычислить
+//а) наибольшее,
+//b) наименьшее,
+//c) наиболее близкое к нулю.
+
+#include <iostream>
+using namespace std;
+
+int main()
+{
+    setlocale(LC_ALL, "rus");   //для отображения русского языка
+    int number_of_Elements;     //для общего количества элементов
+    int temp;                   //для замены местами данных массива
+    cout << "Введите количество элементов в массиве: ";
+    //проверка на положительный ввод
+    do {
+        cin >> number_of_Elements;
+        //предложится повторный ввод, если пользователь ввел данные <= 0
+        if (number_of_Elements <= 0)
+            cout << "Введите положительное целое число: ";
+    } while (number_of_Elements <= 0);
+    //выделяем память под динамический массив
+    int* data_array = new int[number_of_Elements];
+
+    //заполняем массив данными
+    for (int i = 0; i < number_of_Elements; i++) {
+        cout << i + 1 << " значение = ";
+        cin >> data_array[i];
+    }
+    cout << endl;
+    //сортирует массив по возрастанию
+    for (int i = 1; i < number_of_Elements; i++) {
+
+        //меняются местами значения, 
+        //если текущий элемент больше последующего
+        if (data_array[i - 1] > data_array[i])
+        {
+            temp = data_array[i - 1];
+            data_array[i - 1] = data_array[i];
+            data_array[i] = temp;
+            i = 0;  //пробегаем по массиву заново, чтобы сравнить поменянное значение со всеми предыдущими в списке
+        }
+    }
+    cout << "отсортированный массив на " << number_of_Elements << " элементов:" << endl;
+    //вывод отсортированного массива
+    for (int i = 0; i < number_of_Elements; i++) {
+        cout << i + 1 << " значение: " << data_array[i] << endl;
+    }
+    cout << endl;
+
+    //в сортированном списке по возрастанию последний элемент является наибольшим
+    cout << "наибольшее значение = " << data_array[number_of_Elements - 1] << endl;
+    //а первый, соответственно, наименьшим
+    cout << "наименьшее значение = " << data_array[0] << endl;
+
+    int near = data_array[0];
+    //ищет ближайшее значение к 0
+    for (int i = 0; i < number_of_Elements; i++) {
+        //сравнение идет по модулю
+        if (abs(near) > abs(data_array[i])) {
+            near = data_array[i];
+        }
+    }
+    cout << "ближайшее значение к 0 = " << near << endl;
+    //высвобождаем выделенную память
+    delete[] data_array;
+    return 0;
+}
+
+
