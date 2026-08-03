@@ -27,3 +27,1854 @@ int main() {
 	}
 	return 0;
 }
+
+Алгоритм «Функции» (Аргументы: вещественное; Результат: вещественное)
+Дано: Начальное и конечное значение x и y, а также шаг для игрика и икса.
+Надо: Вычислить и напечатать таблицу значений функции и сумму ее значений для всех пар аргументов при x[a,b) с шагом hx, y[c,d) с шагом hy. Вычисление f(x,y) для одной пары значений аргументов определить в отдельной функции.
+#include <iostream>
+#include <iomanip>
+
+#define PI 3.1415926535
+
+double my_abs(double a);
+double my_pow(double a, double n);
+double my_log(double a);
+double my_arctg(double a);
+double my_sin(double a);
+double my_cos(double a);
+double my_tg(double a);
+double my_exp(double a);
+
+double my_abs(double a) {
+	return a > 0 ? a : -a;
+}
+
+double my_pow(double a, double n) {
+	return my_exp(n * my_log(a));
+}
+
+double my_log(double a) {
+	double eps = 1e-6;
+	double res = 0.0;
+	double q = (a - 1.0) / (a + 1.0);
+	double n = 1.0;
+	while (my_abs(q) > eps)
+	{
+		res += q;
+		n += 2.0;
+		q *= (a - 1.0) * (a - 1.0) / (a + 1.0) / (a + 1.0) * (n - 2.0) / (n);
+	}
+	return res * 2;
+}
+
+double my_arctg(double a) {
+	if (my_abs(a) <= 1)
+	{
+		double eps = 1e-6;
+		double res = 0.0;
+		double q = a;
+		double n = 1.0;
+		while (my_abs(q) > eps)
+		{
+			res += q;
+			n += 2.0;
+			q *= -a * a * (n - 2.0) / (n);
+		}
+		return res;
+	}
+	else
+	{
+		return PI / 2 - my_arctg(1 / a);
+	}
+}
+
+double my_sin(double a) {
+	double eps = 1e-6;
+	double res = 0.0;
+	double q = a;
+	double n = 1.0;
+	while (my_abs(q) > eps)
+	{
+		res += q;
+		n += 2.0;
+		q *= -a * a / (n - 1) / (n);
+	}
+	return res;
+}
+
+double my_cos(double a) {
+	double eps = 1e-6;
+	double res = 0.0;
+	double q = 1.0;
+	double n = 0.0;
+	while (my_abs(q) > eps)
+	{
+		res += q;
+		n += 2.0;
+		q *= -a * a / (n - 1) / (n);
+	}
+	return res;
+}
+
+double my_exp(double a) {
+	double eps = 1e-6;
+	double res = 1;
+	double q = 1;
+	double  i = 1;
+	while (q > eps)
+	{
+		q *= a / i;
+		res += q;
+		i++;
+	}
+	return res;
+}
+
+double my_tg(double a) {
+	return my_sin(a) / my_cos(a);
+}
+
+double func(double x, double y) {
+	if (x < y)
+	{
+		return my_pow(1.0 + my_abs(y), 2.0 * x);
+	}
+	else if (x > y)
+	{
+		return my_tg(x + y);
+	}
+	else
+	{
+		return my_pow(y, 2.0 / 3.0) * my_arctg(x + y);
+	}
+}
+
+
+int main() {
+	char logo[] =
+		"************************************************\n"
+		"* Nizhny Novgorog State Technical University   *\n"
+		"* Study work number 3.                         *\n"
+		"* Performed student 21-IVT-3 Sychev E. S.      *\n"
+		"************************************************\n";
+	std::cout << logo;
+
+	double a, b, hx, c, d, hy, x, y;
+	int lenx, leny;
+	std::cout << "Input a: " << std::endl;
+	std::cin >> a;
+	if (!std::cin.good()) {
+		std::cout << "Incorrect!" << std::endl;	return 1;
+	}
+	std::cout << "Input b: " << std::endl;
+	std::cin >> b;
+	if (!std::cin.good() || b < a) {
+		std::cout << "Incorrect!" << std::endl;	return 1;
+	}
+	std::cout << "Input hx: " << std::endl;
+	std::cin >> hx;
+	if (!std::cin.good() || hx <= 0) {
+		std::cout << "Incorrect!" << std::endl;	return 1;
+	}
+	std::cout << "Input c: " << std::endl;
+	std::cin >> c;
+	if (!std::cin.good()) {
+		std::cout << "Incorrect!" << std::endl;	return 1;
+	}
+	std::cout << "Input d: " << std::endl;
+	std::cin >> d;
+	if (!std::cin.good() || d < c) {
+		std::cout << "Incorrect!" << std::endl;	return 1;
+	}
+	std::cout << "Input hy: " << std::endl;
+	std::cin >> hy;
+	if (!std::cin.good() || hy <= 0) {
+		std::cout << "Incorrect!" << std::endl;	return 1;
+	}
+
+	lenx = (b - a) / hx;
+	leny = (d - c) / hy;
+
+	double** Arr = new double* [leny];
+	for (int i = 0; i < leny; i++)
+		Arr[i] = new double[lenx];
+
+	y = c;
+	for (int i = 0; i < leny; i++)
+	{
+		x = a;
+		for (int j = 0; j < lenx; j++)
+		{
+			Arr[i][j] = func(x, y);
+			x += hx;
+		}
+		y += hy;
+	}
+
+	x = a;
+	y = c;
+	std::cout << std::setw(5) << "y\\x";
+	for (int j = 0; j < lenx; j++)
+	{
+		std::cout << std::setw(15) << x;
+		x += hx;
+	}
+	std::cout << std::endl;
+	for (int i = 0; i < leny; i++)
+	{
+		std::cout << std::setw(5) << y;
+		std::cout.setf(std::ios::scientific);
+		for (int j = 0; j < lenx; j++)
+		{
+			std::cout << std::setw(15) << Arr[i][j];
+		}
+		std::cout.unsetf(std::ios::scientific);
+		std::cout << std::endl;
+		y += hy;
+	}
+
+	for (int i = 0; i < leny; i++)
+		delete[] Arr[i];
+	delete[] Arr;
+	return 0;
+}
+
+Работа с хэш-таблицами \Создание, редактирование, поиск\
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <iostream>
+#define N 500  
+
+struct table {
+	char orignalkey[40];
+	int  hashkey;
+	table* next;
+	int size;
+};
+
+struct table* info = NULL;
+
+int makehash(char* str)
+{
+	int hash = 0, square = 0;
+	for (int i = 0; i < strlen(str) - 1; i++)
+	{
+		hash = str[i] + hash;
+	}
+	square = hash * hash;
+	return ((square >> 14) % 16384);
+}
+
+struct table* createhashtable(FILE* file, struct table* info)
+{
+	unsigned int square = 0, i = 0, hash = 0, hashkey = 0;
+	char str[40];
+	info = new struct table[N];
+	for (int i = 0; i < N; i++)
+	{
+		info[i].hashkey = NULL;
+		info[i].next = NULL;
+		strcpy(info[i].orignalkey, "");
+	}
+	while (!feof(file))
+	{
+		fgets(str, 255, file);
+		hashkey = makehash(str);
+		for (int j = 0; j < N; j++)
+		{
+			if (j == hashkey) {
+				if (info[j].hashkey != NULL)
+				{
+					struct table* p;
+					table* list = new table;
+					p = info[j].next;
+					while (p != NULL)
+					{
+						p = p->next;
+					}
+					p = info[j].next;
+					info[j].next = list;
+					list->hashkey = info[j].hashkey;
+					strcpy(list->orignalkey, str);
+					list->next = p;
+					break;
+				}
+				else {
+					strcpy(info[j].orignalkey, str);
+					info[j].hashkey = hashkey;
+					break;
+				}
+			}
+		}
+		i++;
+	}
+	info->size = i;
+	return info;
+}
+
+struct table* addelem(char str[40], struct table* info)
+{
+	int h = 0;
+	h = makehash(str);
+	if (info[h].hashkey != NULL)
+	{
+		struct table* p;
+		table* list = new table;
+		p = info[h].next;
+		while (p != NULL)
+		{
+			p = p->next;
+		}
+		p = info[h].next;
+		info[h].next = list;
+		list->hashkey = info[h].hashkey;
+		strcpy(list->orignalkey, str);
+		list->next = p;
+
+	}
+	else {
+		strcpy(info[h].orignalkey, str);
+		info[h].hashkey = h;
+	}
+	if (h > N) { printf("Элемент не добавлен!\n"); }
+	else { printf("Элемент добавлен!\n"); }
+	info->size++;
+	return info;
+}
+
+struct table* deleteelem(char str[40], struct table* info)
+{
+	int h = 0;
+	h = makehash(str);
+	info[h].hashkey = NULL;
+	strcpy(info[h].orignalkey, "");
+	if (info[h].next != NULL)
+	{
+		struct table* p;
+		p = info[h].next;
+		while (p != NULL) {
+			p->hashkey = NULL;
+			strcpy(p->orignalkey, "");
+			p = p->next;
+		}
+	}
+	if (h > N) { printf("Элемента нет в хэш-таблице!"); }
+	info->size--;
+	return info;
+}
+
+void search(char str[40], struct table* info)
+{
+
+	int h = 0;
+	h = makehash(str);
+	if (info[h].hashkey == h)
+	{
+		printf("Найденный элемент:\n");
+		printf("Code:%d | %s ", info[h].hashkey, info[h].orignalkey);
+		if (info[h].next != NULL)
+		{
+			struct table* p;
+			p = info[h].next;
+			while (p != NULL) {
+				printf(" -> Code:%d | %s ", p->hashkey, p->orignalkey);
+				p = p->next;
+			}
+		}
+	}
+	else { printf("Элемент не найден\n"); }
+}
+
+struct table* rehashing(struct table* info, char str[40])
+{
+	int h = 0;
+	h = makehash(str);
+	while (info[h].hashkey != NULL)
+	{
+		h++;
+	}
+	strcpy(info[h].orignalkey, str);
+	info[h].hashkey = h;
+	return info;
+}
+
+void printhashtable(struct table* info)
+{
+
+	for (int i = 0; i < N; i++)
+	{
+		if (info[i].hashkey == NULL)
+			continue;
+		printf("Code:%d | %s ", info[i].hashkey, info[i].orignalkey);
+		if (info[i].next != NULL)
+		{
+			struct table* p;
+			p = info[i].next;
+			while (p != NULL) {
+				printf(" -> Code:%d | %s ", p->hashkey, p->orignalkey);
+				p = p->next;
+			}
+		}
+	}
+}
+
+void menu()
+{
+	printf("*********************************************\n");
+	printf("*      1-Создать хэш-таблицу               *\n");
+	printf("*      2-Вывести хэш-таблицу               *\n");
+	printf("*      3-Найти элемент                     *\n");
+	printf("*      4-Добавить элемент                  *\n");
+	printf("*      5-Удалить элемент                   *\n");
+	printf("*      6-Ре-хэширование таблицы            *\n");
+	printf("*      7-Выход                             *\n");
+	printf("*********************************************\n");
+}
+
+int main()
+{
+	setlocale(LC_ALL, "Russian");
+	FILE* file;
+	int choice = 0;
+	while (true) {
+		system("CLS");
+		menu();
+		scanf("%d", &choice);
+		switch (choice)
+		{
+		case 1:
+		{file = fopen("data.txt", "r");
+		info = createhashtable(file, info);
+		fclose(file);
+		break; }
+		case 2:
+		{if (info == NULL) { printf("Таблица не создана!\n"); system("pause"); break; }
+		printhashtable(info);
+		system("pause");
+		break; }
+		case 3:
+		{if (info == NULL) { printf("Таблица не создана!\n"); system("pause"); break; }
+		char str1[10];
+		char str2[10];
+		char str3[10];
+		system("CLS");
+		printf("Введите элемент:");
+		scanf("%s %s %s", str1, str2, str3);
+		strcat(str1, " ");
+		strcat(str1, str2);
+		strcat(str1, " ");
+		strcat(str1, str3);
+		strcat(str1, "\n");
+		search(str1, info);
+		system("pause");
+		break; }
+		case 4:
+		{if (info == NULL) {
+			printf("Таблица не создана!\n"); system("pause"); break;
+		}
+		file = fopen("data.txt", "a");
+		char str1[10];
+		char str2[10];
+		char str3[10];
+		file = fopen("data.txt", "a");
+		system("CLS");
+		printf("Введите новый элемент:");
+		scanf("%s %s %s", str1, str2, str3);
+		strcat(str1, " ");
+		strcat(str1, str2);
+		strcat(str1, " ");
+		strcat(str1, str3);
+		fprintf(file, "\n");
+		fprintf(file, str1);
+		strcat(str1, "\n");
+		fprintf(file, "\n");
+		fprintf(file, str1);
+		info = addelem(str1, info);
+		system("pause");
+		fclose(file);
+		break; }
+		case 5:
+		{
+			if (info == NULL) { printf("Таблица не создана!\n"); system("pause"); break; }
+			char str1[10];
+			char str2[10];
+			char str3[10];
+			system("CLS");
+			printf("Введите элемент для удаления:");
+			scanf("%s %s %s", str1, str2, str3);
+			strcat(str1, " ");
+			strcat(str1, str2);
+			strcat(str1, " ");
+			strcat(str1, str3);
+			strcat(str1, "\n");
+			deleteelem(str1, info);
+			system("pause");
+			break; }
+		case 6:
+		{
+			if (info == NULL) { printf("Таблица не создана!\n"); system("pause"); break; }
+			char str1[10];
+			char str2[10];
+			char str3[10];
+			int n = 0;
+			system("CLS");
+			printf("Как много элемнтов добавить:");
+			scanf("%d", &n);
+			info = new struct table[N + n];
+			file = fopen("data.txt", "r");
+			info = createhashtable(file, info);
+			fclose(file);
+			for (int i = 0; i < n; i++)
+			{
+				printf("Введите, какой элемент нужно добавить:");
+				scanf("%s %s %s", str1, str2, str3);
+				strcat(str1, " ");
+				strcat(str1, str2);
+				strcat(str1, " ");
+				strcat(str1, str3);
+				strcat(str1, "\n");
+				info = rehashing(info, str1);
+			}
+			system("pause");
+			break; }
+		case 7:
+		{system("CLS");
+		exit(1);
+		break; }
+		default: {
+			if (!choice) { printf("Ошибка ввода!"); exit(1); }
+			printf("Неправильный выбор.Пробовать снова!\n");
+			system("pause");
+			break;
+		}
+		}
+	}
+}
+Написать программу, работающую в текстовом режиме (ширина экрана равна 80 столбцов), которая должна выводить на экран содержимое текстового файла, имя которого передается в программу с помощью аргументов командной. 
+Все строки в файле длиннее 80 символов необходимо переносить по словам на следующую строку экрана. Вверху экрана выводить имя файла. Цвет символов - белый. Цвет фона - черный. При нажатии клавиш Up & Down прокручивать экран по вертикали. 
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <termios.h>
+#include <unistd.h>
+const std::string down("\x1B[1T");
+const std::string up("\x1B[1S");
+const std::string clrscr("\x1B[2J\x1B[01;02H");
+const std::string clrfrm("\x1B[2J");
+int getch()
+{
+	struct termios oldattr, newattr;
+	int lig;
+	tcgetattr(STDIN_FILENO, &oldattr);
+	newattr = oldattr;
+	newattr.c_lflag &= ~(ICANON | ECHO);
+	tcsetattr (STDIN_FILENO, TCSANOW, &newattr);
+	lig = getchar();
+	tcsetattr (STDIN_FILENO, TCSANOW, &oldattr);
+	return lig;
+             }
+void my_output (std::string text, int width, int offset, char *filename)
+{
+	std::cout << "\e[2J\e[37;40m\e[2J";
+	std::string str = "";
+	std::string ntext = "";
+	int space1 = -1, space2 = 0;
+	while (offset > 0) {
+		std::cout << std::endl;
+		offset--;
+	}
+	for (int i = 0; i < text.size(); i++) {
+		if (text[i] == ' ') {
+	      		space2 = i;
+	      	if (space2 - space1 + str.size() < width)
+			str += text.substr(space1 + 1, space2 - space1);
+	      	else {
+			ntext += str + "\n";
+			str = text.substr(space1 + 1, space2 - space1);
+	      	}
+	      	space1 = space2;
+	    	}
+	    	if (i + 1 == text.size()) {
+	      		if (space2 - space1 + str.size() < width) {
+				str += text.substr(space1 + 1, text.size() - space1);
+				ntext += str + "\n";
+	      		} else {
+				ntext += str + "\n";
+				str = text.substr(space1 + 1, text.size() - space1);
+				ntext += str + "\n";
+	      		}
+	    	}
+	}
+	while (offset < 0) {
+		std::string::size_type pos{};
+		pos = ntext.find_first_of("\n", pos);
+		ntext.erase(0, pos+1);
+		offset++;
+	}
+	std::cout << ntext << std::endl;
+	std::cout << "\e[0;0H\e[30;47m\e[0K" << filename << "\e[0m";
+}
+int main (int argc, char** argv)
+{
+	if (argc == 2) {
+		std :: ifstream file(argv[1]);
+		if (file.is_open()){
+			std::string text;
+			while (!file.eof()){
+				std::string buff;
+				std::getline(file, buff);
+				text += buff + "\n";
+			}
+			int offset = 0;
+			int lig;
+			do {
+				my_output(text, 80, offset, argv[1]);
+				lig = getch();
+				if (lig == 65)
+					offset -= 1;
+				if (lig == 66)
+					offset += 1;
+			} while (lig != 'q');
+		}
+		else {
+			std::cout << "File does not exists!" << std::endl;
+			return 1;
+		}
+	}
+	else {
+		std::cout << "Wrong number of arguments!" << std::endl;
+		return 1;
+	}
+	return 0;
+}
+
+
+Подготовить несколько текстовых файлов с сообщениями. Подготовить специальный текстовый файл, в котором заданы пути к текстовым файлам с сообщениями. 
+Написать программу, принимающую в качестве аргумента командной строки путь к текстовому файлу, читающую из файла имена текстовых файлов с сообщениями и выводящую текстовые файлы с сообщениями на экран.
+
+#include <iostream>
+#include <windows.h>
+#include <string>
+#include <fstream>
+#include <conio.h>
+
+int main(int argc, char** argv)
+{
+	char logo[] =
+		"************************************************\n"
+		"* Nizhny Novgorog State Technical University   *\n"
+		"* Study work number 1. Option 27.              *\n"
+		"* Performed student 21-IVT-3 Sychev E. S.      *\n"
+		"************************************************\n";
+	std::cout << logo;
+	if (argc == 2) {
+		std::ifstream file(argv[1]);
+		if (file.is_open()) {
+			std::string s1, s2;
+			while (std::getline(file, s1, '#') && std::getline(file, s2, '#')) {
+				std::ifstream file(s1);
+				std::string lines;
+				   if (file.is_open()) {
+					   std::string buff;
+					 while (!file.eof()) {
+						std::getline(file, buff);
+						lines += buff + '\n';
+					} file.close();
+				}
+			  std::cout << lines << std::endl;
+
+			std::ifstream file2(s2);
+			std::string lines2;
+				if (file2.is_open()) {
+					std::string buff;
+					while (!file2.eof()) {
+						std::getline(file2, buff);
+						lines2 += buff + '\n';
+					} file2.close();
+					std::cout << lines2 << std::endl;
+				}
+				else
+					std::cerr << "Error open file!\n";
+			} file.close();
+		}
+		else
+			std::cerr << "Error open file!\n";
+	}
+}
+Согласно заданию, составить алгоритм и написать программу на языке С++. Программа компилируется и запускается под управлением ОС Linux. Разработанная программа должна содержать встроенную справочную информации, описывающую правила использования, цель назначения и информацию о разработчике. Аргументы запуска программа должна обрабатывать согласно рекомендациям POSIX. 
+Разрабатываемая программа предназначена для хранения массива переменных структурного типа данных (записей). Программа должна поддерживать управление на уровне аргументов командной строки (аргументов запуска). 
+Поддерживаемые опции запуска: 
+--help либо -h - запуск программы в режиме получения справки. После вывода справочной информации программа завершает работу. 
+-с [N] [file_name] - запуск программы в режиме создания электронной таблицы записей, N – количество записей, file_name – имя текстового файла, в котором будет сохранен массив (таблица) записей. 
+-r [N] [file_name] - запуск программы в режиме чтения содержимого текстового файла file_name, на экран должны быть выведены не более N записей. Следует учесть, что реальное количество записей в файле может не совпадать с заданным значением N. Если заданный файл окажется пуст, либо по какой-либо причине программа не сможет его открыть, должно быть выдано соответствующее сообщение. 
+В случае если программа будет запущена с неопределенным разработчиком аргументами, программа должна выдать соответствующее сообщение и вывести минимальную справку о корректных аргументах запуска. Это так же касается случая, когда программа запускается без аргументов.
+Наименование воздушной линии\Тип самолета\Количество рейсов\Налет\Пассажирооборот
+
+Main.cpp
+
+#include <iostream>
+#include <cstring>
+#include "mylib.h"
+
+#define help "help <option> [args]\nOptions:\n--help -h: Help\n-c [N] [file_name] Create N records and write it into 'file_name'\n-r [N] [file_name] Read 'file_name' and print first N records"
+
+int main(int argc, char** argv)
+{
+	char logo[] =
+		"************************************************\n"
+		"* Nizhny Novgorog State Technical University   *\n"
+		"* Study work number 1. Option 27(2).              *\n"
+		"* Performed student 21-IVT-3 Sychev E. S.      *\n"
+		"************************************************\n";
+	std::cout << logo;
+	if (argc >= 2) {
+		if (!mylib::mystrcmp(argv[1], "-h") || !mylib::mystrcmp(argv[1], "--help")) {
+			if (argc == 2) {
+				std::cout << help << std::endl;
+				return 0;
+			}
+			else {
+				std::cout << "Wrong number of arguments!" << std::endl;
+				return 1;
+			}
+		}
+		else if (!strcmp(argv[1], "-c")) {
+			if (argc == 4) {
+				mylib::Spreadsheet s;
+				for (int i = 0; i < std::atoi(argv[2]); i++)
+				{
+					mylib::Record r;
+					std::cout << "[" << i + 1 << "] Name of the air line: ";
+					std::cin >> r.name;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Type of aircraft: ";
+					std::cin >> r.type;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Number of flights: ";
+					std::cin >> r.flights_number;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Raid, km: ";
+					std::cin >> r.flights_km;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Passenger turnover: ";
+					std::cin >> r.traffic;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					s.addrecord(r);
+				}
+				s.write(argv[3]);
+			}
+			else {
+				std::cout << "Wrong number of arguments!" << std::endl;
+				return 1;
+			}
+		}
+		else if (!strcmp(argv[1], "-r")) {
+			if (argc == 4) {
+				mylib::Spreadsheet s;
+				s.read(argv[3]);
+				s.print(std::atoi(argv[2]));
+			}
+			else {
+				std::cout << "Wrong number of arguments!" << std::endl;
+				return 1;
+			}
+		}
+		else {
+			std::cout << "Wrong option!" << std::endl;
+			return 1;
+		}
+
+	}
+	else {
+		std::cout << "No options!" << std::endl;
+		return 1;
+	}
+}
+
+mylib.h
+#pragma once
+#ifndef MYLIB_H__
+#define MYLIB_H__
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+namespace mylib {
+	int myatoi(char* s);
+	int mystrcmp(const char* s1, const char* s2);
+
+	struct Record {
+		std::string name;
+		std::string type;
+		int flights_number;
+		int flights_km;
+		int traffic;
+	};
+
+	struct Spreadsheet {
+		std::vector <Record> buff;
+		int len;
+		void addrecord(mylib::Record r);
+		void write(char filename[]);
+		void read(char filename[]);
+		void print(int n);
+	};
+}
+#endif
+
+mylib.cpp
+#include "mylib.h"
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+
+namespace mylib {
+	int myatoi(char* s) {
+		int res = 0;
+		for (; *s; res += *s++ - '0') {
+			res *= 10;
+		}
+		return res;
+	}
+
+	int mystrcmp(const char* s1, const char* s2)
+	{
+		for (; *s1 == *s2; ++s1, ++s2)
+			if (*s2 == '\0')
+				return 0;
+		if ((unsigned char)*s1 > (unsigned char)*s2)
+			return 1;
+		else
+			return -1;
+	}
+
+	void Spreadsheet::addrecord(Record r) {
+		this->buff.push_back(r);
+	}
+
+	void Spreadsheet::write(char filename[]) {
+		std::ofstream file;
+		file.open(filename);
+		if (!file.is_open()) {
+			std::cout << "Can't open file!" << std::endl;
+			return;
+		}
+		int n = this->buff.size();
+		for (int i = 0; i < n; i++) {
+			Record r = this->buff[i];
+			file << r.name << " ";
+			file << r.type << " ";
+			file << r.flights_number << " ";
+			file << r.flights_km << " ";
+			file << r.traffic << " ";
+		}
+		file.close();
+	}
+
+	void Spreadsheet::read(char filename[]) {
+		std::ifstream file;
+		file.open(filename);
+		if (!file.is_open()) {
+			std::cout << "Can't open file!" << std::endl;
+			return;
+		}
+		while (!file.eof()) {
+			Record r;
+			std::string stemp;
+			int itemp;
+			if (!(file >> stemp))
+				break;
+			r.name = stemp;
+			if (!(file >> stemp))
+				break;
+			r.type = stemp;
+			if (!(file >> itemp))
+				break;
+			r.flights_number = itemp;
+			if (!(file >> itemp))
+				break;
+			r.flights_km = itemp;
+			if (!(file >> itemp))
+				break;
+			r.traffic = itemp;
+			this->buff.push_back(r);
+		}
+		file.close();
+	}
+	void Spreadsheet::print(int n) {
+		if (n > this->buff.size()) {
+			n = this->buff.size();
+		}
+		for (int i = 0; i < n; i++) {
+			Record r = this->buff[i];
+			std::cout << std::setw(15) << r.name << " ";
+			std::cout << std::setw(15) << r.type << " ";
+			std::cout << std::setw(15) << r.flights_number << " ";
+			std::cout << std::setw(15) << r.flights_km << " ";
+			std::cout << std::setw(15) << r.traffic << "\n";
+		}
+	}
+}
+Согласно заданию, составить алгоритм и написать программу на языке С++. Программа компилируется и запускается под управлением ОС Linux. Разработанная программа должна содержать встроенную справочную информации, описывающую правила использования, цель назначения и информацию о разработчике. Аргументы запуска программа должна обрабатывать согласно рекомендациям POSIX. 
+Разрабатываемая программа предназначена для обработки и хранения массива экземпляров класса. Массив экземпляров класса целесообразно рассматривать в виде упрощенной элетронной таблицы. Созданная электронная таблица, массив экземпляров класса должен сохраняться в файле, чтение и запись в который осуществляется в двоичном (бинарном) режиме. Для получения информации об объеме записей, в файл так же должен быть записан так называемый дескриптор электронной таблицы. Дескриптор, как минимум, должен содержать информации о количестве данных, которые записаны в указанный файл. Перечень атрибут класса (членов-данных) определяется исходя их задания во второй лабораторной работе. Созданная программа должна поддерживать управление на уровне аргументов командной строки (аргументов запуска). Поддерживаемые опции запуска:
+ --help либо -h - запуск программы в режиме получения справки. После вывода справочной информации программа завершает работу. 
+-с [N] [file_name] - запуск программы в режиме создания электронной таблицы записей, N – количество записей, file_name – имя бинарного файла, в котором будет сохранен массив (таблица) записей. 
+-r [N] [file_name] - запуск программы в режиме чтения содержимого бинарного файла file_name, на экран должны быть выведены не более N записей. Следует учесть, что реальное количество записей в файле может не совпадать с заданным значением N. Если заданный файл окажется пуст, либо по какой-либо причине программа не сможет его открыть, должно быть выдано соответствующее сообщение. 
+В случае, если программа будет запущена с неопределенным разработчиком аргументами, программа должна выдать соответствующее сообщение и вывести минимальную справку о корректных аргументах запуска. Это так же касается случая, когда программа запускается без аргументов. 
+
+Код программы:
+LabWork3.cpp
+#include <iostream>
+#include "mylib.h"
+
+#define help "help <option> [args]\nOptions:\n--help -h: Help\n-c [N] [file_name] Create N records and write it into 'file_name'\n-r [N] [file_name] Read 'file_name' and print first N records"
+
+int main(int argc, char** argv)
+{
+	char logo[] =
+		"************************************************\n"
+		"* Nizhny Novgorog State Technical University   *\n"
+		"* Study work number 3. Option 27(2).              *\n"
+		"* Performed student 21-IVT-3 Sychev E. S.      *\n"
+		"************************************************\n";
+	std::cout << logo;
+	if (argc >= 2) {
+		if (!mylib::mystrcmp(argv[1], "-h") || !mylib::mystrcmp(argv[1], "--help")) {
+			if (argc == 2) {
+				std::cout << help << std::endl;
+				return 0;
+			}
+			else {
+				std::cout << "Wrong number of arguments!" << std::endl;
+				return 1;
+			}
+		}
+		else if (!mylib::mystrcmp(argv[1], "-c")) {
+			if (argc == 4) {
+				mylib::Spreadsheet s(mylib::myatoi(argv[2]));
+				for (int i = 0; i < mylib::myatoi(argv[2]); i++)
+				{
+					mylib::Record r;
+					std::cout << "[" << i + 1 << "] Name of the air line: ";
+					std::cin >> r.name;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Type of aircraft: ";
+					std::cin >> r.type;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Number of flights: ";
+					std::cin >> r.flights_number;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Raid, km: ";
+					std::cin >> r.flights_km;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Passenger turnover: ";
+					std::cin >> r.traffic;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					s.addrecord(r);
+				}
+				s.write(argv[3]);
+			}
+			else {
+				std::cout << "Wrong number of arguments!" << std::endl;
+				return 1;
+			}
+		}
+		else if (!mylib::mystrcmp(argv[1], "-r")) {
+			if (argc == 4) {
+				mylib::Spreadsheet s(mylib::myatoi(argv[2]));
+				s.read(argv[3]);
+				s.print(mylib::myatoi(argv[2]));
+			}
+			else {
+				std::cout << "Wrong number of arguments!" << std::endl;
+				return 1;
+			}
+		}
+		else {
+			std::cout << "Wrong option!" << std::endl;
+			return 1;
+		}
+
+	}
+	else {
+		std::cout << "No options!" << std::endl;
+		return 1;
+	}
+}
+
+mylib.h
+#pragma once
+#ifndef MYLIB_H__
+#define MYLIB_H__
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+namespace mylib {
+	int myatoi(char* s);
+	int mystrcmp(const char* s1, const char* s2);
+
+	class Record {
+	public:
+		std::string name;
+		std::string type;
+		int flights_number;
+		int flights_km;
+		int traffic;
+	};
+
+	struct Spreadsheet {
+	private:
+		Record* buff;
+		int len;
+		int contain;
+	public:
+		Spreadsheet(int);
+		void addrecord(mylib::Record r);
+		void write(char filename[]);
+		void read(char filename[]);
+		void print(int n);
+	};
+}
+#endif
+
+mylib.cpp
+#include "mylib.h"
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+
+namespace mylib {
+	int myatoi(char* s) {
+		int res = 0;
+		for (; *s; res += *s++ - '0') {
+			res *= 10;
+		}
+		return res;
+	}
+
+	int mystrcmp(const char* s1, const char* s2)
+	{
+		for (; *s1 == *s2; ++s1, ++s2)
+			if (*s2 == '\0')
+				return 0;
+		if ((unsigned char)*s1 > (unsigned char)*s2)
+			return 1;
+		else
+			return -1;
+	}
+
+	Spreadsheet::Spreadsheet(int len) {
+		this->len = len;
+		this->contain = 0;
+		this->buff = new Record[len];
+	}
+
+	void Spreadsheet::addrecord(Record r) {
+		this->buff[contain] = r;
+		this->contain++;
+	}
+
+	void Spreadsheet::write(char filename[]) {
+		std::ofstream file;
+		file.open(filename);
+		if (!file.is_open()) {
+			std::cout << "Can't open file!" << std::endl;
+			return;
+		}
+		int n = this->contain;
+		for (int i = 0; i < n; i++) {
+			Record r = this->buff[i];
+			file << r.name << " ";
+			file << r.type << " ";
+			file << r.flights_number << " ";
+			file << r.flights_km << " ";
+			file << r.traffic << " ";
+		}
+		file.close();
+	}
+
+	void Spreadsheet::read(char filename[]) {
+		std::ifstream file;
+		file.open(filename);
+		if (!file.is_open()) {
+			std::cout << "Can't open file!" << std::endl;
+			return;
+		}
+		while (!file.eof()) {
+			Record r;
+			std::string stemp;
+			int itemp;
+			if (!(file >> stemp))
+				break;
+			r.name = stemp;
+			if (!(file >> stemp))
+				break;
+			r.type = stemp;
+			if (!(file >> itemp))
+				break;
+			r.flights_number = itemp;
+			if (!(file >> itemp))
+				break;
+			r.flights_km = itemp;
+			if (!(file >> itemp))
+				break;
+			r.traffic = itemp;
+			this->addrecord(r);
+		}
+		file.close();
+	}
+	void Spreadsheet::print(int n) {
+		if (n > this->contain) {
+			n = this->contain;
+		}
+		for (int i = 0; i < n; i++) {
+			Record r = this->buff[i];
+			std::cout << std::setw(15) << r.name << " ";
+			std::cout << std::setw(15) << r.type << " ";
+			std::cout << std::setw(15) << r.flights_number << " ";
+			std::cout << std::setw(15) << r.flights_km << " ";
+			std::cout << std::setw(15) << r.traffic << "\n";
+		}
+	}
+}
+
+
+Согласно заданию, составить алгоритм и написать программу на языке С++. Программа компилируется и запускается под управлением ОС Linux. 
+В случае если студент разрабатывает программу, работающую под управлением операционной системы MS Windows, необходимо обеспечить максимальную переносимость кода. То есть не использовать не стандартные Microsoft-расширения языка С++, привязанные к среде разработки MS Visual Studio. 
+Разработанная программа должна содержать встроенную справочную информации, описывающую правила использования, цель назначения и информацию о разработчике. Аргументы запуска программа должна обрабатывать согласно рекомендациям POSIX. 
+Создать пользовательский класс TCharArray (массив), используемый для хранения элементов типа char. В данном классе должен быть реализован метод at для доступа к элементу символьного массива с проверкой корректности значения индекса элемента массива. Кроме того, необходимо перегрузить операцию [ ] для доступа к элементам массива. Используя класс TCharArray в качестве родительского, создать производный от него пользовательский класс String, используемый для хранения символьных строк. Для данного класса перегрузить следующие операции: ‘+’, ‘==’, ‘> ’, ‘ <’, ' != '
+Разрабатываемая программа предназначена для хранения массива экземпляров класса. Перечень атрибут класса (членов-данных) определяется исходя их задания во второй лабораторной работе. Созданная программа должна поддерживать управление на уровне аргументов командной строки (аргументов запуска). 
+Поддерживаемые опции запуска:
+ --help либо -h - запуск программы в режиме получения справки. После вывода справочной информации программа завершает работу. 
+-с [N] [file_name] - запуск программы в режиме создания электронной таблицы записей, N – количество записей, file_name – имя бинарного файла, в котором будет сохранен массив (таблица) записей.
+-r [N] [file_name] - запуск программы в режиме чтения содержимого бинарного файла file_name, на экран должны быть выведены не более N записей. Следует учесть, что реальное количество записей в файле может не совпадать с заданным значением N. Если заданный файл окажется пуст, либо по какой-либо причине программа не сможет его открыть, должно быть выдано соответствующее сообщение. 
+В случае, если программа будет запущена с неопределенным разработчиком аргументами, программа должна выдать соответствующее сообщение и вывести минимальную справку о корректных аргументах запуска. Это так же касается случая, когда программа запускается без аргументов.
+
+LabWork4.cpp
+#include <iostream>
+#include <cstring>
+#include "mylib.h"
+
+#define help "help <option> [args]\nOptions:\n--help -h: Help\n-c [N] [file_name] Create N records and write it into 'file_name'\n-r [N] [file_name] Read 'file_name' and print first N records"
+
+int main(int argc, char** argv)
+{
+	char logo[] =
+		"************************************************\n"
+		"* Nizhny Novgorog State Technical University   *\n"
+		"* Study work number 4. Option 27(2).           *\n"
+		"* Performed student 21-IVT-3 Sychev E. S.      *\n"
+		"************************************************\n";
+	std::cout << logo;
+	if (argc >= 2) {
+		if (!mylib::mystrcmp(argv[1], "-h") || !mylib::mystrcmp(argv[1], "--help")) {
+			if (argc == 2) {
+				std::cout << help << std::endl;
+				return 0;
+			}
+			else {
+				std::cout << "Wrong number of arguments!" << std::endl;
+				return 1;
+			}
+		}
+		else if (!mylib::mystrcmp(argv[1], "-c")) {
+			if (argc == 4) {
+				mylib::Spreadsheet s;
+				for (int i = 0; i < mylib::myatoi(argv[2]); i++)
+				{
+					char stemp[30];
+					int itemp;
+					mylib::Record r;
+					std::cout << "[" << i + 1 << "] Name of the air line: ";
+					std::cin >> stemp;
+					r.name = stemp;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Type of aircraft: ";
+					std::cin >> stemp;
+					r.type = stemp;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Number of flights: ";
+					std::cin >> itemp;
+					r.flights_number = itemp;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Raid, km: ";
+					std::cin >> itemp;
+					r.flights_km = itemp;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					std::cout << "[" << i + 1 << "] Passenger turnover: ";
+					std::cin >> itemp;
+					r.traffic = itemp;
+					if (!std::cin.good()) {
+						std::cout << "Input Error!" << std::endl;
+						return 1;
+					}
+					s.addrecord(r);
+				}
+				s.write(argv[3]);
+			}
+			else {
+				std::cout << "Wrong number of arguments!" << std::endl;
+				return 1;
+			}
+		}
+		else if (!mylib::mystrcmp(argv[1], "-r")) {
+			if (argc == 4) {
+				mylib::Spreadsheet s;
+				s.read(argv[3]);
+				s.print(mylib::myatoi(argv[2]));
+			}
+			else {
+				std::cout << "Wrong number of arguments!" << std::endl;
+				return 1;
+			}
+		}
+		else {
+			std::cout << "Wrong option!" << std::endl;
+			return 1;
+		}
+
+	}
+	else {
+		std::cout << "No options!" << std::endl;
+		return 1;
+	}
+}
+
+mylib.h
+#pragma once
+#ifndef MYLIB_H__
+#define MYLIB_H__
+
+#include <iostream>
+#include "mystring.h"
+#include <vector>
+
+namespace mylib {
+	int myatoi(char* s);
+	int mystrcmp(const char* s1, const char* s2);
+
+	class Record {
+	public:
+		mystring::String name;
+		mystring::String type;
+		int flights_number;
+		int flights_km;
+		int traffic;
+	};
+
+	struct Spreadsheet {
+	private:
+		std::vector <Record> buff;
+		int len;
+	public:
+		void addrecord(mylib::Record r);
+		void write(char filename[]);
+		void read(char filename[]);
+		void print(int n);
+	};
+}
+#endif
+
+mylib.cpp
+#include "mylib.h"
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+
+namespace mylib {
+	int myatoi(char* s) {
+		int res = 0;
+		for (; *s; res += *s++ - '0') {
+			res *= 10;
+		}
+		return res;
+	}
+
+	int mystrcmp(const char* s1, const char* s2)
+	{
+		for (; *s1 == *s2; ++s1, ++s2)
+			if (*s2 == '\0')
+				return 0;
+		if ((unsigned char)*s1 > (unsigned char)*s2)
+			return 1;
+		else
+			return -1;
+	}
+
+	void Spreadsheet::addrecord(Record r) {
+		this->buff.push_back(r);
+	}
+
+	void Spreadsheet::write(char filename[]) {
+		std::ofstream file;
+		file.open(filename);
+		if (!file.is_open()) {
+			std::cout << "Can't open file!" << std::endl;
+			return;
+		}
+		int n = this->buff.size();
+		for (int i = 0; i < n; i++) {
+			Record r = this->buff[i];
+			file << r.name << " ";
+			file << r.type << " ";
+			file << r.flights_number << " ";
+			file << r.flights_km << " ";
+			file << r.traffic << " ";
+		}
+		file.close();
+	}
+
+	void Spreadsheet::read(char filename[]) {
+		std::ifstream file;
+		file.open(filename);
+		if (!file.is_open()) {
+			std::cout << "Can't open file!" << std::endl;
+			return;
+		}
+		while (!file.eof()) {
+			Record r;
+			char stemp[30];
+			int itemp;
+			if (!(file >> stemp))
+				break;
+			r.name = stemp;
+			if (!(file >> stemp))
+				break;
+			r.type = stemp;
+			if (!(file >> itemp))
+				break;
+			r.flights_number = itemp;
+			if (!(file >> itemp))
+				break;
+			r.flights_km = itemp;
+			if (!(file >> itemp))
+				break;
+			r.traffic = itemp;
+			this->buff.push_back(r);
+		}
+		file.close();
+	}
+
+	void Spreadsheet::print(int n) {
+		if (n > this->buff.size()) {
+			n = this->buff.size();
+		}
+		for (int i = 0; i < n; i++) {
+			Record r = this->buff[i];
+			std::cout << std::setw(15) << r.name << " ";
+			std::cout << std::setw(15) << r.type << " ";
+			std::cout << std::setw(15) << r.flights_number << " ";
+			std::cout << std::setw(15) << r.flights_km << " ";
+			std::cout << std::setw(15) << r.traffic << "\n";
+		}
+	}
+}
+
+mystring.h
+#pragma once
+
+#ifndef STRING_H
+#define STRING_H
+
+#include <iostream>
+
+namespace mystring {
+	class String
+	{
+	private:
+		char* buffer;
+		int length;
+
+		void Set(const char* str);
+
+	public:
+		String();
+		String(const char* str);
+		String(const String& other);
+		String(String&& other);
+		~String();
+
+		String& operator = (const String& other);
+		String& operator = (const char* str);
+		String operator + (const String& other);
+		String operator + (const char* str);
+
+		bool operator == (const String& other);
+		bool operator == (const char other[]) const;
+		bool operator != (const String& other);
+		bool operator > (const String& other);
+		bool operator >= (const String& other);
+		bool operator < (const String& other);
+		bool operator <= (const String& other);
+
+		char& operator [](int index);
+
+		friend std::ostream& operator << (std::ostream& os, const String& str);
+		friend std::istream& operator >> (std::istream& is, String& str);
+
+		int Length() const;
+		char* Get();
+		const char* data() const;
+
+		static char* toString(int val);
+	};
+}
+
+#endif
+
+
+
+
+mystring.cpp
+#include "mystring.h"
+#include <cstring>
+
+namespace mystring {
+	void String::Set(const char* str)
+	{
+		if (str == nullptr)
+			return;
+
+		length = strlen(str);
+		buffer = new char[length + 1];
+
+		for (int i = 0; i < length; i++) buffer[i] = str[i];
+
+		buffer[length] = '\0';
+	}
+
+	String::String()
+	{
+		buffer = nullptr;
+		length = 0;
+	}
+
+	String::String(const char* str) : String()
+	{
+		this->Set(str);
+	}
+
+	String::String(const String& other) : String()
+	{
+		this->Set(other.buffer);
+	}
+
+	String::String(String&& other)
+	{
+		this->length = other.length;
+		this->buffer = other.buffer;
+
+		other.buffer = nullptr;
+	}
+
+	String::~String()
+	{
+		if (buffer != nullptr) delete[]buffer;
+	}
+
+	String& String::operator = (const String& other)
+	{
+		if (this->buffer != nullptr)
+			delete[]buffer;
+
+		Set(other.buffer);
+
+		return *this;
+	}
+	String& String::operator = (const char* str)
+	{
+		if (this->buffer != nullptr)
+			delete[]buffer;
+
+		Set(str);
+
+		return *this;
+	}
+
+	String String::operator +(const String& other)
+	{
+		String newStr;
+		int thisLenght = 0;
+		int otherLenght = 0;
+
+		if (this->buffer != nullptr) thisLenght = strlen(this->buffer);
+		if (other.buffer != nullptr) otherLenght = strlen(other.buffer);
+
+		newStr.length = thisLenght + otherLenght;
+
+		newStr.buffer = new char[thisLenght + otherLenght + 1];
+		int i = 0;
+
+		for (; i < thisLenght; i++) newStr.buffer[i] = this->buffer[i];
+		for (int j = 0; j < otherLenght; j++, i++) newStr.buffer[i] = other.buffer[j];
+
+		newStr.buffer[thisLenght + otherLenght] = '\0';
+
+		return newStr;
+	}
+
+	String String::operator +(const char* str)
+	{
+		String newStr;
+		int thisLenght = 0;
+		int otherLenght = 0;
+
+		if (this->buffer != nullptr) thisLenght = strlen(this->buffer);
+
+		otherLenght = strlen(str);
+
+		newStr.length = thisLenght + otherLenght;
+
+		newStr.buffer = new char[thisLenght + otherLenght + 1];
+		int i = 0;
+
+		for (; i < thisLenght; i++) newStr.buffer[i] = this->buffer[i];
+		for (int j = 0; j < otherLenght; j++, i++) newStr.buffer[i] = str[j];
+
+		newStr.buffer[thisLenght + otherLenght] = '\0';
+
+		return newStr;
+	}
+
+	bool String::operator == (const String& other)
+	{
+		if (other.length != this->length) return false;
+
+		for (int i = 0; i < this->length; i++)
+		{
+			if (this->buffer[i] != other.buffer[i])
+				return false;
+		}
+
+		return true;
+	}
+
+	bool String::operator == (const char other[]) const
+	{
+		if (strlen(other) != this->length) return false;
+
+		for (int i = 0; i < this->length; i++)
+		{
+			if (this->buffer[i] != other[i])
+				return false;
+		}
+
+		return true;
+	}
+
+	bool String::operator != (const String& other)
+	{
+		return !(this->operator==(other));
+	}
+
+	bool String::operator > (const String& other)
+	{
+		int len = (this->length < other.length) ? this->length : other.length;
+
+		for (int i = 0; i < len; i++)
+		{
+			if (int(this->buffer[i]) > int(other.buffer[i]))
+				return true;
+			else if (int(this->buffer[i]) < int(other.buffer[i]))
+				return false;
+		}
+
+		if (this->length == len)
+			return false;
+		else
+			return true;
+	}
+
+	bool String::operator >= (const String& other)
+	{
+		int len = (this->length < other.length) ? this->length : other.length;
+
+		for (int i = 0; i < len; i++)
+		{
+			if (int(this->buffer[i]) < int(other.buffer[i]))
+				return false;
+		}
+		if (this->length == len)
+		{
+			if (this->length == other.length)
+				return true;
+			else
+				return false;
+		}
+		return true;
+	}
+
+	bool String::operator < (const String& other)
+	{
+		return !(this->operator>(other));
+	}
+
+	bool String::operator <= (const String& other)
+	{
+		int len = (this->length < other.length) ? this->length : other.length;
+
+		for (int i = 0; i < len; i++)
+		{
+			if (int(this->buffer[i]) > int(other.buffer[i]))
+				return false;
+		}
+		if (this->length == len)
+			return true;
+		return false;
+	}
+
+	char& String::operator [](int index)
+	{
+		return this->buffer[index];
+	}
+
+	std::ostream& operator<< (std::ostream& os, const String& str)
+	{
+		os << str.buffer;
+		return os;
+	}
+	std::istream& operator>> (std::istream& is, String& str)
+	{
+		std::streamsize n = 60;
+		char buf[60];
+		is.getline(buf, n - 1);
+		buf[n - 1] = '\0';
+		str.Set(buf);
+		return is;
+	}
+
+	int String::Length() const
+	{
+		return length;
+	}
+
+	char* String::Get()
+	{
+		return buffer;
+	}
+
+	const char* String::data() const
+	{
+		if (buffer == nullptr)
+			throw std::invalid_argument("Error: arg = nullptr.");
+
+		return buffer;
+	}
+
+	char* String::toString(int val)
+	{
+		char res[64];
+		std::snprintf(res, 64, "%d", val);
+		return res;
+	}
+}
+
+
+Согласно заданию, составить алгоритм и написать программу на языке С++. Программа компилируется и запускается под управлением ОС Linux. 
+В случае если студент разрабатывает программу, работающую под управлением операционной системы MS Windows, необходимо обеспечить максимальную переносимость кода. То есть не использовать не стандартные Microsoft-расширения языка С++, привязанные к среде разработки MS Visual Studio. 
+Разработанная программа должна содержать встроенную справочную информации, описывающую правила использования, цель назначения и информацию о разработчике. Аргументы запуска программа должна обрабатывать согласно рекомендациям POSIX.
+
+Код программы:
+#include <iostream>
+#include <string>
+#include <fstream>
+
+// Базовый класс - Категория работников
+class BasClass {
+
+public:
+
+	BasClass() {}
+	std::string Daba;
+	virtual void Begin() {
+
+		std::cout << "In which category?";
+		std::cin >> Daba;
+
+	}
+	void Vision()
+	{
+		std::cout << Daba << '\n';
+
+	}
+	~BasClass() {}
+};
+//Производный класс - Стажер()Студент.
+class Stagor :public BasClass {
+
+public:
+	Stagor() {}
+	void Begin() override {
+		std::cout << "Enter a Surname of interns ";
+		std::cin >> Daba;
+	}
+
+};
+
+//Производный класс - Программист.
+class Prog :public BasClass {
+
+public:
+	Prog() {}
+	void Begin() override {
+		std::cout << "Enter a Surname of Programmist ";
+		std::cin >> Daba;
+	}
+
+};
+
+// Производный класс - Тестировщик ПО.
+class TestPo :public BasClass {
+
+public:
+	TestPo() {}
+	void Begin() override {
+		std::cout << "Enter a Surname of Testirowshik PO ";
+		std::cin >> Daba;
+	}
+
+};
+// Производный класс - Руководитель отдела.
+class DepHead :public BasClass {
+
+public:
+	DepHead() {}
+	void Begin() override {
+		std::cout << "Enter a Surname of Department head";
+		std::cin >> Daba;
+	}
+
+};
+
+int main() {
+	char logo[] =
+		"************************************************\n"
+		"* Nizhny Novgorog State Technical University   *\n"
+		"* Study work number 5. Option 27.              *\n"
+		"* Performed student 21-IVT-3 Sychev E. S.      *\n"
+		"************************************************\n";
+	std::cout << logo;
+	std::cout << "Select the recording mode" << std::endl;
+	std::cout << "1 - Stagor(student)\n2 - Programmist \n3 - Testirowshik PO\n4 - Department head\n" << std::endl;
+	BasClass* Arr[100];
+
+
+	int grup;
+	int Quantity;
+
+	std::cout << "\n Which group?\n";
+	std::cin >> grup;
+	std::cout << "\n How many people? \n";
+	std::cin >> Quantity;
+	std::cin.clear();
+	std::cin.get();
+	if (grup == 1)
+	{
+		for (int i = 0; i < Quantity; i++)
+		{
+			Arr[i] = new Stagor;
+			Arr[i]->Begin();
+
+		}
+
+
+	}
+	if (grup == 2)
+	{
+		for (int i = 0; i < Quantity; i++)
+		{
+			Arr[i] = new Prog;
+			Arr[i]->Begin();
+
+		}
+	}
+	if (grup == 3)
+	{
+		for (int i = 0; i < Quantity; i++)
+		{
+			Arr[i] = new TestPo;
+			Arr[i]->Begin();
+
+		}
+	}
+	if (grup == 4)
+	{
+		for (int i = 0; i < Quantity; i++)
+		{
+			Arr[i] = new DepHead;
+			Arr[i]->Begin();
+
+		}
+	}
+
+	std::cout << '\n';
+
+	for (int i = 0; i < Quantity; i++)
+	{
+
+		Arr[i]->Vision();
+		std::string way = "Datebase.txt";
+		std::ofstream foo;
+		foo.open(way, std::ofstream::app);
+		if (!foo.is_open())
+		{
+			std::cout << "ERROR OPEN FILE!";
+		}
+		else
+		{
+			foo << Arr[i]->Daba << '\n';
+
+			foo.close();
+
+		}
+	}
+	return 0;
+}
+
+
