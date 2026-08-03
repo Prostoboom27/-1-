@@ -1,0 +1,700 @@
+1)	Ознакомится с особенностями функциями работы с фалами и потоком ввода в Python 3
+2)	Ознакомиться с библиотекой multiprocessing
+3)	Выполнить задачу по отключению дочернего потока из main 
+4)	Выполнить задачи подсчета площади круга и сортировки строки в рамках ознакомления с базовым потоком консольного ввода-вывода в Python 3
+5)	Ознакомиться с простой программой на tkinter
+
+
+
+ 
+Реализация (Листинг кода)
+
+"""filename: whereami01.py"""
+import os, sys
+print('My os.getcwd : %s' % os.getcwd())
+print('My sys.path : %s' % sys.path[:6])
+input('Press Enter-key to quit')
+
+"""filename: whereami02.py"""
+import os, sys
+print('My os.getcwd : %s' % os.getcwd())
+text = sys.path[:6]
+print('My sys.path : ')
+for line in text:
+    print(line)
+input('Press Enter-key to quit')
+
+"""filename: whereami03.py"""
+import os, sys
+from tkinter import Tk, Label, Button, YES, TOP, BOTH
+lines = '' # ссылка на подготавливаемое текстовое сообщение
+lines += ('My os.getcwd : %s' % os.getcwd() + '\n')
+text = sys.path[:6]
+lines += ('My sys.path :' + '\n')
+for line in text:
+    lines +=(line + '\n')
+# Строка lines содержит всю необходимую информацию
+root = Tk()
+lbl = Label(root, text=lines, font=('arial', 12)).pack(
+    expand=YES, side=TOP, fill=BOTH)
+btn = Button(root, text='Quit', command=root.quit).pack()
+root.mainloop()
+
+"""filename: whereami04.py"""
+import os, sys
+from tkinter import *
+lines = '' # ссылка на подготавливаемое текстовое сообщение
+lines += ('My os.getcwd : ' + '\n' + os.getcwd() + '\n')
+path_lines = sys.path[:6]
+lines += ('My sys.path :' + '\n')
+for line in path_lines:
+    lines +=(line + '\n')
+# Строка lines содержит всю необходимую информацию
+root = Tk()
+text = Text(root, height=10, width=80)
+scroll = Scrollbar(root, command=text.yview)
+text.configure(yscrollcommand=scroll.set)
+text.insert(END, lines)
+text.pack(side=LEFT)
+scroll.pack(side=RIGHT, fill=Y)
+root.mainloop()
+
+
+# filename: test_stream_01.py
+def small_process():
+    print('Testing stream sys.stdin.')
+    while True:
+        try:
+            reply = input('Enter a number > ')
+        except EOFError:
+            break
+        else:
+            num = int(reply)
+            print("%d squared is %d" % (num, num * num))
+    print('Bye')
+
+if __name__ == '__main__':
+    small_process()
+
+
+"""filename: sorter.py - сортирует данные считанных строк"""
+import sys
+lines = sys.stdin.readlines() # читает строки данных из sys.stdin
+line.sort() # сортировка строк встроенным методом
+for line in lines: # цикл перебора считанных и отсортированных строк
+    print(line, end='') # вывод строк в стандартный поток вывода
+# END ---------------------------------------------------------------
+
+
+import sys
+old_output_stream = sys.stdout # сохраняем ссылку на sys.stdout
+fp = open(r'result.txt', 'a') # создаем файловый поток
+sys.stdout = fp # связываем ссылку на sys.stdout c файловым потоком
+print("Software Output to file")
+fp.close()
+sys.stdout = old_output_stream # восстанавливаем ссылку на sys.stdout
+print("Sostware Output to sys.stdout")
+1)	
+import sys
+fp = open(r'result1.txt', 'a')
+print("Software Output to file", file=fp)
+fp.close()
+print("Sostware Output to sys.stdout")
+2)	
+import sys
+old_stdin = sys.stdin # сохраняем ссылку sys.stdin
+fp = open(r'result1.txt', 'r') # открываем файловый поток для чтения
+sys.stdin = fp # изменяем значение ссылки sys.stdin
+while True: # цикл построчного чтения данных их файла
+    try: # файловый поток содержит символ EOF
+        text = input() # чтение которого методом input() приводит
+        print(text) # к «выбросу» объекта исключения
+    except EOFError:
+        break # достигнут конец файла, прервать цикл
+sys.stdin = old_stdin # восстанавливаем значение ссылки на sys.stdin
+fp.close() # закрываем файловый поток
+input(r'Press Enter-key to quit.')
+3)	
+import sys, time
+print("На старт...")
+for i in range(9, -1, -1):
+    sys.stdout.write("\rОбратный отсчет : %d" % i)
+    sys.stdout.flush()
+    time.sleep(1)
+sys.stdout.write('\r ')
+sys.stdout.write('\rПоехали!!!')
+
+4)	
+"""
+Читаем числа - координаты точек (x,y) и проверяет принадлежность
+данной точки окружности с координатами центра заданого точкой (A,B)
+и радиуса R. Работа программы прекращается при нажатии сочетания
+клавиш Ctrl+Z.
+"""
+def my_process():
+    import sys
+    print('Проверка ------------------------------------\n'
+        'приналдежит ли точка с заданными координатами\n'
+5)	
+        'определенной пользователем окружности.')
+    print('---------------------------------------------')
+    # Begin - Подготока данных --------------------------------------
+    print('Введите координаты центра окружности')
+    try:
+        A = float(input('X : '))
+    except ValueError:
+        print('Ошибка ввода данных!')
+        sys.exit(1)
+    try:
+        B = float(input('Y : '))
+    except ValueError:
+        print('Ошибка ввода данных!')
+        sys.exit(1)
+    try:
+        R = float(input('Величина радиуса R : '))
+    except ValueError:
+        print('Ошибка ввода данных!')
+        sys.exit(1)
+    # Start of cycle - Начало цикла обработки данных ----------------
+    while True:
+        try:
+            reply = input('Введите через пробел координаты X и Y : ')
+        except EOFError:
+            print('Введено Ctrl-Z')
+            break # Пользователь ввел Ctrl+Z – признак
+                # завершения ввода данных
+        else:
+            (x,y) = reply.split(' ')
+            try:
+                x = float(x)
+            except ValueError:
+                print('Ошибка ввода данных для координаты X')
+                continue
+            try:
+                y = float(y)
+            except ValueError:
+                print('Ошибка ввода данных для координаты Y')
+                continue
+            if (x-A)*(x-A) + (y-B)*(y-B) < R*R:
+                print('Точка с координатами (%f,%f) принадлежит'
+                ' указанной окружности' % (x,y))
+            else:
+                print('Точка с координатами (%f,%f) не принадлежит'
+                    ' указанной окружности' % (x,y))
+                print("Для выхода из цикла нажмите 'Ctrl-Z'")
+            # End of cycle - Начало цикла обработки данных ------------------
+    print('Bye')
+if __name__ == '__main__':
+    my_process()
+6)	
+"""filename: adder.py
+Description: читает ститанные из стандартного потока
+ввода данныеи, преобразует их в целочисленные значения - int().
+Возвращет значение суммы считанных значений"""
+import sys
+
+sum = 0
+while True:
+    try:
+        line = input()  # или sys.input.readlines()
+    except EOFError:  # или for line in sys.stdin:
+        break  # input() отсекает символы \n в конце строки
+    else:
+        sum += int(line)
+print(sum)
+# END ---------------------------------------------------------------
+
+7)	
+import multiprocessing
+
+def worker():
+    """worker function"""
+    print('Worker')
+
+if __name__ == '__main__':
+    jobs = []
+    for i in range(5):
+        p = multiprocessing.Process(target=worker)
+        jobs.append(p)
+        p.start()
+        p.join()
+    input("Finam main process.")
+
+8)	
+import multiprocessing
+import time, os
+
+def clock(interval):
+    print("Child process %d run, The time is %s" % (os.getpid(),
+                                                    time.ctime()))
+    time.sleep(interval)
+    print('Child process %d terminated' % os.getpid())
+9)	
+if __name__ == '__main__':
+    proc = multiprocessing.Process(target=clock, args=(7,))
+    proc.start()
+    print('Main process %d terminated' % os.getpid())
+# END -----------------------------------------------------------
+import multiprocessing
+import time, os
+
+class ClockProcess(multiprocessing.Process):
+    def __init__(self, interval):
+        multiprocessing.Process.__init__(self)
+        self.interval = interval
+
+    def run(self):
+        while True:
+            print("The time is %s" % time.ctime())
+            time.sleep(self.interval)
+
+if __name__ == '__main__':
+    proc = ClockProcess(7)
+    proc.start()
+    print('Main process %d terminated' % os.getpid())
+# END -----------------------------------------------------------
+
+10)	
+import multiprocessing
+
+def worker(num):
+    print('Worker: %d' % num)
+
+if __name__ == '__main__':
+    jobs = []
+    for i in range(5):
+        p = multiprocessing.Process(target=worker, args=(i,))
+        jobs.append(p)
+        p.start()
+        # p.join()
+    print('Main process terminated')
+
+11)	
+import multiprocessing
+
+def worker(num):
+    print('Worker: %d' % num)
+
+if __name__ == '__main__':
+    jobs = []
+    for i in range(5):
+        # Формирование списка дочерних процессов – подготовка
+        # необходимых для запуску процессов ресурсов
+        jobs.append(multiprocessing.Process(target=worker,
+                                            args=(i,)))
+    for pr in jobs:
+        # Запуск готовых дочерних процессов
+        pr.start()
+        # pr.join()
+    print('Main process terminated')
+
+12)	
+from multiprocessing import Process
+import os
+
+def info(title):
+    print(title)
+    print('module name: %s' % __name__)
+    print('parent process: %d' % os.getpid())
+    print('process id: %d' % os.getpid())
+
+def f(name):
+    info('function f')
+    print('Hello, %s' % name)
+
+if __name__ == '__main__':
+    info('Main line')
+    p = Process(target=f, args=('Bob Green',))
+    p.start()
+    p.join()
+
+
+
+
+Решение задачи:
+Условие: измените пример 9 таким образом, чтобы у пользователя появилась возможность из родительского процесса завершить работу дочернего процесса.
+Решение:
+
+
+
+# Change
+import multiprocessing
+import os
+import time
+
+class ClockProcess(multiprocessing.Process):
+    def __init__(self, interval):
+        multiprocessing.Process.__init__(self)
+        self.interval = interval
+
+    def run(self):
+        while True:
+            print("The time is %s" % time.ctime())
+            time.sleep(self.interval)
+
+if __name__ == '__main__':
+    proc = ClockProcess(7)
+    proc.start()
+    while True:
+        print("Enter command: ")
+        inp = input()
+        if "kill" in inp:
+            proc.terminate()
+            print("Terminated proc: ", proc)
+        elif "break" in inp or "exit" in inp:
+            break
+print('Main process %d terminated' % os.getpid())
+
+
+
+
+
+1)	Ознакомится с особенностями функциями работы с фалами и потоком ввода в Python 3
+2)	Ознакомиться с библиотекой multiprocessing
+3)	Выполнить задачу по отключению дочернего потока из main 
+4)	Выполнить задачи подсчета площади круга и сортировки строки в рамках ознакомления с базовым потоком консольного ввода-вывода в Python 3
+5)	Ознакомиться с простой программой на tkinter
+
+
+
+ 
+Реализация (Листинг кода)
+
+"""filename: whereami01.py"""
+import os, sys
+print('My os.getcwd : %s' % os.getcwd())
+print('My sys.path : %s' % sys.path[:6])
+input('Press Enter-key to quit')
+
+"""filename: whereami02.py"""
+import os, sys
+print('My os.getcwd : %s' % os.getcwd())
+text = sys.path[:6]
+print('My sys.path : ')
+for line in text:
+    print(line)
+input('Press Enter-key to quit')
+
+"""filename: whereami03.py"""
+import os, sys
+from tkinter import Tk, Label, Button, YES, TOP, BOTH
+lines = '' # ссылка на подготавливаемое текстовое сообщение
+lines += ('My os.getcwd : %s' % os.getcwd() + '\n')
+text = sys.path[:6]
+lines += ('My sys.path :' + '\n')
+for line in text:
+    lines +=(line + '\n')
+# Строка lines содержит всю необходимую информацию
+root = Tk()
+lbl = Label(root, text=lines, font=('arial', 12)).pack(
+    expand=YES, side=TOP, fill=BOTH)
+btn = Button(root, text='Quit', command=root.quit).pack()
+root.mainloop()
+
+"""filename: whereami04.py"""
+import os, sys
+from tkinter import *
+lines = '' # ссылка на подготавливаемое текстовое сообщение
+lines += ('My os.getcwd : ' + '\n' + os.getcwd() + '\n')
+path_lines = sys.path[:6]
+lines += ('My sys.path :' + '\n')
+for line in path_lines:
+    lines +=(line + '\n')
+# Строка lines содержит всю необходимую информацию
+root = Tk()
+text = Text(root, height=10, width=80)
+scroll = Scrollbar(root, command=text.yview)
+text.configure(yscrollcommand=scroll.set)
+text.insert(END, lines)
+text.pack(side=LEFT)
+scroll.pack(side=RIGHT, fill=Y)
+root.mainloop()
+
+
+# filename: test_stream_01.py
+def small_process():
+    print('Testing stream sys.stdin.')
+    while True:
+        try:
+            reply = input('Enter a number > ')
+        except EOFError:
+            break
+        else:
+            num = int(reply)
+            print("%d squared is %d" % (num, num * num))
+    print('Bye')
+
+if __name__ == '__main__':
+    small_process()
+
+
+"""filename: sorter.py - сортирует данные считанных строк"""
+import sys
+lines = sys.stdin.readlines() # читает строки данных из sys.stdin
+line.sort() # сортировка строк встроенным методом
+for line in lines: # цикл перебора считанных и отсортированных строк
+    print(line, end='') # вывод строк в стандартный поток вывода
+# END ---------------------------------------------------------------
+
+
+import sys
+old_output_stream = sys.stdout # сохраняем ссылку на sys.stdout
+fp = open(r'result.txt', 'a') # создаем файловый поток
+sys.stdout = fp # связываем ссылку на sys.stdout c файловым потоком
+print("Software Output to file")
+fp.close()
+sys.stdout = old_output_stream # восстанавливаем ссылку на sys.stdout
+print("Sostware Output to sys.stdout")
+1)	
+import sys
+fp = open(r'result1.txt', 'a')
+print("Software Output to file", file=fp)
+fp.close()
+print("Sostware Output to sys.stdout")
+2)	
+import sys
+old_stdin = sys.stdin # сохраняем ссылку sys.stdin
+fp = open(r'result1.txt', 'r') # открываем файловый поток для чтения
+sys.stdin = fp # изменяем значение ссылки sys.stdin
+while True: # цикл построчного чтения данных их файла
+    try: # файловый поток содержит символ EOF
+        text = input() # чтение которого методом input() приводит
+        print(text) # к «выбросу» объекта исключения
+    except EOFError:
+        break # достигнут конец файла, прервать цикл
+sys.stdin = old_stdin # восстанавливаем значение ссылки на sys.stdin
+fp.close() # закрываем файловый поток
+input(r'Press Enter-key to quit.')
+3)	
+import sys, time
+print("На старт...")
+for i in range(9, -1, -1):
+    sys.stdout.write("\rОбратный отсчет : %d" % i)
+    sys.stdout.flush()
+    time.sleep(1)
+sys.stdout.write('\r ')
+sys.stdout.write('\rПоехали!!!')
+
+4)	
+"""
+Читаем числа - координаты точек (x,y) и проверяет принадлежность
+данной точки окружности с координатами центра заданого точкой (A,B)
+и радиуса R. Работа программы прекращается при нажатии сочетания
+клавиш Ctrl+Z.
+"""
+def my_process():
+    import sys
+    print('Проверка ------------------------------------\n'
+        'приналдежит ли точка с заданными координатами\n'
+5)	
+        'определенной пользователем окружности.')
+    print('---------------------------------------------')
+    # Begin - Подготока данных --------------------------------------
+    print('Введите координаты центра окружности')
+    try:
+        A = float(input('X : '))
+    except ValueError:
+        print('Ошибка ввода данных!')
+        sys.exit(1)
+    try:
+        B = float(input('Y : '))
+    except ValueError:
+        print('Ошибка ввода данных!')
+        sys.exit(1)
+    try:
+        R = float(input('Величина радиуса R : '))
+    except ValueError:
+        print('Ошибка ввода данных!')
+        sys.exit(1)
+    # Start of cycle - Начало цикла обработки данных ----------------
+    while True:
+        try:
+            reply = input('Введите через пробел координаты X и Y : ')
+        except EOFError:
+            print('Введено Ctrl-Z')
+            break # Пользователь ввел Ctrl+Z – признак
+                # завершения ввода данных
+        else:
+            (x,y) = reply.split(' ')
+            try:
+                x = float(x)
+            except ValueError:
+                print('Ошибка ввода данных для координаты X')
+                continue
+            try:
+                y = float(y)
+            except ValueError:
+                print('Ошибка ввода данных для координаты Y')
+                continue
+            if (x-A)*(x-A) + (y-B)*(y-B) < R*R:
+                print('Точка с координатами (%f,%f) принадлежит'
+                ' указанной окружности' % (x,y))
+            else:
+                print('Точка с координатами (%f,%f) не принадлежит'
+                    ' указанной окружности' % (x,y))
+                print("Для выхода из цикла нажмите 'Ctrl-Z'")
+            # End of cycle - Начало цикла обработки данных ------------------
+    print('Bye')
+if __name__ == '__main__':
+    my_process()
+6)	
+"""filename: adder.py
+Description: читает ститанные из стандартного потока
+ввода данныеи, преобразует их в целочисленные значения - int().
+Возвращет значение суммы считанных значений"""
+import sys
+
+sum = 0
+while True:
+    try:
+        line = input()  # или sys.input.readlines()
+    except EOFError:  # или for line in sys.stdin:
+        break  # input() отсекает символы \n в конце строки
+    else:
+        sum += int(line)
+print(sum)
+# END ---------------------------------------------------------------
+
+7)	
+import multiprocessing
+
+def worker():
+    """worker function"""
+    print('Worker')
+
+if __name__ == '__main__':
+    jobs = []
+    for i in range(5):
+        p = multiprocessing.Process(target=worker)
+        jobs.append(p)
+        p.start()
+        p.join()
+    input("Finam main process.")
+
+8)	
+import multiprocessing
+import time, os
+
+def clock(interval):
+    print("Child process %d run, The time is %s" % (os.getpid(),
+                                                    time.ctime()))
+    time.sleep(interval)
+    print('Child process %d terminated' % os.getpid())
+9)	
+if __name__ == '__main__':
+    proc = multiprocessing.Process(target=clock, args=(7,))
+    proc.start()
+    print('Main process %d terminated' % os.getpid())
+# END -----------------------------------------------------------
+import multiprocessing
+import time, os
+
+class ClockProcess(multiprocessing.Process):
+    def __init__(self, interval):
+        multiprocessing.Process.__init__(self)
+        self.interval = interval
+
+    def run(self):
+        while True:
+            print("The time is %s" % time.ctime())
+            time.sleep(self.interval)
+
+if __name__ == '__main__':
+    proc = ClockProcess(7)
+    proc.start()
+    print('Main process %d terminated' % os.getpid())
+# END -----------------------------------------------------------
+
+10)	
+import multiprocessing
+
+def worker(num):
+    print('Worker: %d' % num)
+
+if __name__ == '__main__':
+    jobs = []
+    for i in range(5):
+        p = multiprocessing.Process(target=worker, args=(i,))
+        jobs.append(p)
+        p.start()
+        # p.join()
+    print('Main process terminated')
+
+11)	
+import multiprocessing
+
+def worker(num):
+    print('Worker: %d' % num)
+
+if __name__ == '__main__':
+    jobs = []
+    for i in range(5):
+        # Формирование списка дочерних процессов – подготовка
+        # необходимых для запуску процессов ресурсов
+        jobs.append(multiprocessing.Process(target=worker,
+                                            args=(i,)))
+    for pr in jobs:
+        # Запуск готовых дочерних процессов
+        pr.start()
+        # pr.join()
+    print('Main process terminated')
+
+12)	
+from multiprocessing import Process
+import os
+
+def info(title):
+    print(title)
+    print('module name: %s' % __name__)
+    print('parent process: %d' % os.getpid())
+    print('process id: %d' % os.getpid())
+
+def f(name):
+    info('function f')
+    print('Hello, %s' % name)
+
+if __name__ == '__main__':
+    info('Main line')
+    p = Process(target=f, args=('Bob Green',))
+    p.start()
+    p.join()
+
+
+Решение задачи:
+Условие: измените пример 9 таким образом, чтобы у пользователя появилась возможность из родительского процесса завершить работу дочернего процесса.
+Решение:
+# Change
+import multiprocessing
+import os
+import time
+
+class ClockProcess(multiprocessing.Process):
+    def __init__(self, interval):
+        multiprocessing.Process.__init__(self)
+        self.interval = interval
+
+    def run(self):
+        while True:
+            print("The time is %s" % time.ctime())
+            time.sleep(self.interval)
+
+if __name__ == '__main__':
+    proc = ClockProcess(7)
+    proc.start()
+    while True:
+        print("Enter command: ")
+        inp = input()
+        if "kill" in inp:
+            proc.terminate()
+            print("Terminated proc: ", proc)
+        elif "break" in inp or "exit" in inp:
+            break
+print('Main process %d terminated' % os.getpid())
+
+# END -----------------------------------------------------------
+
+# END -----------------------------------------------------------
+
+
+
+По Питону не все, остальные работы в формате скринов их не прикреплял. 
