@@ -1,0 +1,293 @@
+
+
+
+Научиться взаимодействовать с USB-устройствами используя HID и получить навыки работы с устройствами ввода/вывода.
+
+
+import hid
+import time
+import sys
+
+
+def list_hid_devices():
+    """Функция для вывода списка всех подключенных уникальных HID-устройств"""
+    try:
+        unique_devices = {}  # Словарь для хранения уникальных устройств по ключу (VID, PID)
+        devices = hid.enumerate()  # Получаем список всех подключенных устройств
+
+        print("Список подключенных устройств:")
+        for device in devices:
+            device_key = (device['vendor_id'], device['product_id'])
+            # Проверяем, есть ли уже такое устройство в словаре
+            if device_key not in unique_devices:
+                unique_devices[device_key] = device  # Добавляем устройство в словарь
+                # Вывод информации об устройстве
+                print(f"Устройство: {device.get('product_string', 'Неизвестное устройство')}")
+                print(f"  VID: {hex(device['vendor_id'])}")
+                print(f"  PID: {hex(device['product_id'])}")
+                print(f"  Производитель: {device.get('manufacturer_string', 'Неизвестный')}")
+                print(f"  Серийный номер: {device.get('serial_number', 'Нет данных')}")
+                print("******" * 10)
+
+        return list(unique_devices.values())  # Возвращаем список уникальных устройств
+
+    except Exception as e:
+        print(f"Ошибка при получении списка устройств: {e}")
+        sys.exit(1)
+
+
+def open_and_read_hid_device(device):
+    """Открытие устройства по VID и PID и отслеживание нажатий кнопок"""
+    try:
+        # Открываем устройство по VID и PID
+        with hid.Device(device['vendor_id'], device['product_id']) as h:
+            print(f"Устройство открыто: {device.get('product_string', 'Неизвестное устройство')}")
+
+            print("Чтение данных от устройства (нажмите Ctrl+C для остановки)...")
+
+            while True:
+                # Чтение данных с устройства с тайм-аутом
+                data = h.read(64, timeout=500)
+
+                if data:
+                    print("Получены данные:", data)
+
+                    # Первые байты могут быть использованы для отслеживания нажатий кнопок
+                    # Например, если кнопки HID - это 8-битное значение в первом байте:
+                    buttons = data[0]  # Пример обработки кнопок
+                    pressed_buttons = []
+
+                    # Преобразование состояния кнопок в читаемое состояние
+                    for i in range(8):
+                        if buttons & (1 << i):
+                            pressed_buttons.append(f"Кнопка {i + 1} нажата")
+
+                    if pressed_buttons:
+                        print(f"Нажаты кнопки: {', '.join(pressed_buttons)}")
+                    else:
+                        print("Нет нажатых кнопок.")
+                else:
+                    print("Нет данных...")
+
+                # Пауза для предотвращения избыточного опроса
+                time.sleep(0.5)
+
+    except PermissionError:
+        print("Ошибка: Отказ в доступе к устройству.")
+    except OSError as e:
+        print(f"Ошибка: Невозможно открыть устройство. Сообщение: {e}")
+    except KeyboardInterrupt:
+        print("Чтение данных прервано пользователем.")
+    except Exception as e:
+        print(f"Непредвиденная ошибка: {e}")
+
+
+def main():
+    # 1. Получение списка HID-устройств
+    devices = list_hid_devices()
+
+    # 2. Попытка открыть первое доступное устройство из списка
+    if devices:
+        # Просим пользователя выбрать устройство для открытия
+        try:
+            device_index = int(input("Введите номер устройства для открытия (или -1 для выхода): "))
+            if 0 <= device_index < len(devices):
+                open_and_read_hid_device(devices[device_index])
+            else:
+                print("Выход из программы.")
+        except ValueError:
+            print("Ошибка: Введите корректный номер устройства.")
+    else:
+        print("HID-устройства не найдены.")
+
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+Научиться реализовывать программу создания макросов для автоматизации ввода с клавиатуры.
+
+
+
+
+
+import json
+from pynput import keyboard
+import time
+from pynput.keyboard import Controller
+
+# Список для хранения записанных событий
+macro = []
+
+# Флаг для остановки записи
+is_recording = True  # Запись начинается сразу
+
+# Объект для управления клавишами при воспроизведении
+keyboard_controller = Controller()
+
+
+# Функция записи нажатий клавиш
+def on_press(key):
+    global macro
+    if is_recording:
+        try:
+            # Записываем нажатие клавиши
+            macro.append({'key': key.char, 'action': 'press', 'time': time.time()})
+            print(f"Нажата клавиша: {key.char}")
+        except AttributeError:
+            # Для специальных клавиш записываем их строковое представление
+            macro.append({'key': str(key), 'action': 'press', 'time': time.time()})
+            print(f"Нажата клавиша: {key}")
+
+
+# Функция записи отпусканий клавиш
+def on_release(key):
+    global macro
+    if is_recording:
+        try:
+            # Записываем отпускание клавиши
+            macro.append({'key': key.char, 'action': 'release', 'time': time.time()})
+            print(f"Отпущена клавиша: {key.char}")
+        except AttributeError:
+            # Для специальных клавиш записываем их строковое представление
+            macro.append({'key': str(key), 'action': 'release', 'time': time.time()})
+            print(f"Отпущена клавиша: {key}")
+
+    # Остановка записи при нажатии Esc
+    if key == keyboard.Key.esc:
+        stop_recording()
+
+    # Выход из программы по нажатию клавиши 2
+    if key == keyboard.KeyCode.from_char('2'):
+        print("Выход из программы.")
+        return False  # Выход из программы
+
+    # Воспроизведение макроса при нажатии клавиши 1
+    if key == keyboard.KeyCode.from_char('1'):
+        play_macro()
+
+
+# Функция для записи макроса в файл JSON
+def save_macro(filename="macro.json"):
+    with open(filename, 'w') as f:
+        json.dump(macro, f, indent=4, ensure_ascii=False)
+
+
+# Функция для воспроизведения макроса
+def play_macro():
+    print("Воспроизведение макроса...")
+    if not macro:
+        print("Макрос не записан.")
+        return
+
+    start_time = macro[0]['time']  # Начальное время для синхронизации
+    for action in macro:
+        time.sleep(action['time'] - start_time)  # Ожидание для имитации времени
+        start_time = action['time']
+        key = action['key']
+
+        # Для воспроизведения нажатия клавиш
+        if action['action'] == 'press':
+            if 'Key' in key:  # Для специальных клавиш
+                try:
+                    keyboard_controller.press(getattr(keyboard.Key, key.split('.')[1]))
+                except AttributeError:
+                    pass  # Если ошибка в получении клавиши, игнорируем
+            else:
+                keyboard_controller.press(key)  # Для обычных клавиш
+        elif action['action'] == 'release':
+            if 'Key' in key:  # Для специальных клавиш
+                try:
+                    keyboard_controller.release(getattr(keyboard.Key, key.split('.')[1]))
+                except AttributeError:
+                    pass  # Если ошибка в получении клавиши, игнорируем
+            else:
+                keyboard_controller.release(key)  # Для обычных клавиш
+
+
+# Функция для остановки записи
+def stop_recording():
+    global is_recording
+    is_recording = False
+    print("Запись завершена.")
+    save_macro()
+
+
+# Главная функция, которая запускает прослушку клавиатуры
+def start_program():
+    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
+
+
+if __name__ == "__main__":
+    print("Программа запущена. Начата запись макроса.")
+    start_program()
+
+
+
+
+Цель: Ознакомиться с принципами работы последовательного интерфейса UART, изучить методы эмуляции виртуальных COM-портов, а также разработать программы для передачи и обработки данных через них.
+Задача: Разработать программное обеспечение для передачи и приема данных через виртуальные последовательные порты.
+
+
+
+Коды программ:
+Код порта-отправителя COM19:
+import serial
+import zlib
+
+# Настройка порта
+port_name = 'COM20'  
+baud_rate = 9600
+ser = serial.Serial(port_name, baud_rate)
+
+def calculate_checksum(data):
+    """Вычислить контрольную сумму."""
+    return zlib.crc32(data.encode())
+
+while True:
+    message = input("Введите сообщение: ")
+    checksum = calculate_checksum(message)
+    data_to_send = f"{message}({checksum})\n"  # \n важно для read_until
+    ser.write(data_to_send.encode())
+    print(f"Отправлено: {data_to_send}")
+
+Код порта-получателя COM20:
+import serial
+import zlib
+
+# Настройка порта
+port_name = 'COM19'  
+baud_rate = 9600
+ser = serial.Serial(port_name, baud_rate)
+
+
+def calculate_checksum(data):
+    """Вычислить контрольную сумму."""
+    return zlib.crc32(data.encode())
+
+
+print(f"Слушаем порт {port_name}...")
+
+while True:
+    if ser.in_waiting > 0:
+        received_data = ser.read_until().decode().strip()
+        try:
+            message, received_checksum = received_data.rsplit('(', 1)
+            received_checksum = int(received_checksum.strip(')'))
+            calculated_checksum = calculate_checksum(message)
+
+            print(f"Получено сообщение: {message}")
+            if received_checksum == calculated_checksum:
+                print("Контрольные суммы совпадают.")
+            else:
+                print("Ошибка контрольной суммы!")
+        except ValueError:
+            print("Некорректный формат данных.")
+
+
+
+
