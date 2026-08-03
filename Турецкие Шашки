@@ -1,0 +1,649 @@
+Код программы:
+Main.cpp
+#define NOMINMAX
+#include "field.h"
+#include <windows.h>
+#include <conio.h>
+
+template <class T>
+T si(const std::string& _err = "\n", std::function<bool(T)> _comp = nullptr);
+
+// _err - строка с ошибкой
+// _comp - функция сравнения / лямбда
+template <class T>
+T si(const std::string& _err, std::function<bool(T)> _comp)
+{
+    // nullptr - default
+    if (_comp == nullptr) _comp = [](T) {return true; };
+
+    T result;
+
+    // std::cin >> ... вернет не 0, если там ошибка
+    while (!(std::cin >> result) || (std::cin.peek() != '\n') || !_comp(result))
+    {
+        // очищаем и пишем в вывод ошибку
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << _err;
+    }
+    return result;
+}
+
+int main(int agrc, char** argv)
+{
+    // создаем поле
+    Field f;
+
+    // очищаем экран и выводим поле
+    //system("cls");
+    f.print();
+
+    // чей сейчас ход
+    int player = 1;
+
+    for (;;)
+    {
+        // проверка условия победы
+        if (f.blackCount() == 0)
+        {
+            std::cout << "White wins!" << std::endl;
+            _getch();
+            return 0;
+        }
+        if (f.whiteCount() == 0)
+        {
+            std::cout << "Black wins!" << std::endl;
+            _getch();
+            return 0;
+        }
+
+        // кто сейчас ходит
+        f.setPlayer(player);
+
+        // если игрок
+        if (player == 1)
+        {
+            Field::MoveEvent res = Field::MoveEvent::ERR;
+            int x1, y1, x2, y2;
+            while (res == Field::MoveEvent::ERR)
+            {
+                std::cout << "x1: "; x1 = si<int>("Err!\nx1: ", [](int _val) {return _val >= 0 && _val <= 7; });
+                std::cout << "y1: "; y1 = si<int>("Err!\ny1: ", [](int _val) {return _val >= 0 && _val <= 7; });
+                std::cout << "x2: "; x2 = si<int>("Err!\nx2: ", [](int _val) {return _val >= 0 && _val <= 7; });
+                std::cout << "y2: "; y2 = si<int>("Err!\ny2: ", [](int _val) {return _val >= 0 && _val <= 7; });
+
+                // ходиим
+                res = f.move(y1, x1, y2, x2, false);
+                //system("cls");
+                if (res == Field::MoveEvent::ERR)
+                    std::cout << "Err!" << std::endl;
+
+            }
+            f.print();
+
+            // если убили - продолжаем ходить
+            while (res == Field::MoveEvent::KILLED)
+            {
+                std::cout << "x1: "; x1 = si<int>("Err!\nx1: ", [](int _val) {return _val >= 0 && _val <= 7; });
+                std::cout << "y1: "; y1 = si<int>("Err!\ny1: ", [](int _val) {return _val >= 0 && _val <= 7; });
+                std::cout << "x2: "; x2 = si<int>("Err!\nx2: ", [](int _val) {return _val >= 0 && _val <= 7; });
+                std::cout << "y2: "; y2 = si<int>("Err!\ny2: ", [](int _val) {return _val >= 0 && _val <= 7; });
+
+                res = f.move(y1, x1, y2, x2, true);
+                //system("cls");
+                f.print();
+
+                if (res == Field::MoveEvent::ERR)
+                {
+                    std::cout << "Err!" << std::endl;
+                    res = Field::MoveEvent::KILLED;
+                    continue;
+                }
+                if (res == Field::MoveEvent::MOVED) break;
+            }
+        }
+        else
+        {
+            // считаем шашки
+            size_t wc = f.whiteCount();
+            size_t bc = f.blackCount();
+
+            // делаем ход
+            f = f.MiniMax();
+            f.print();
+
+            // если кого-то убили - продолжаем
+            while (wc != f.whiteCount() || bc != f.blackCount())
+            {
+                wc = f.whiteCount();
+                bc = f.blackCount();
+                f = f.MiniMax();
+                f.print();
+            }
+        }
+
+        // меняем игрока
+        if (player == 1) player = 0;
+        else player = 1;
+    }
+    return 0;
+}
+field.cpp
+
+#include "field.h"
+
+Field::Field()
+{
+    m_field = new Entity * [m_size];
+    for (int i = 0; i < m_size; i++) m_field[i] = new Entity[m_size];
+
+    // заполняем поле
+    for (int i = 0; i < m_size; i++)
+        for (int j = 0; j < m_size; j++)
+        {
+            if (i == 1 || i == 2)        m_field[i][j] = Entity::BLACK;
+            else if (i == 5 || i == 6)   m_field[i][j] = Entity::WHITE;
+            else                        m_field[i][j] = Entity::NONE;
+        }
+
+    // по умолчанию пользователь играет белыми
+    m_player = Entity::WHITE;
+    m_opponent = Entity::BLACK;
+}
+
+Field::Field(const Field& _other) : Field()
+{
+    *this = _other;
+}
+
+Field::~Field()
+{
+    for (int i = 0; i < m_size; i++) delete[] m_field[i];
+    delete[] m_field;
+}
+
+Field::Entity Field::toQueen(const Entity& _entity) const
+{
+    if (_entity == Entity::WHITE) return Entity::WHITE_QUEEN;
+    if (_entity == Entity::BLACK) return Entity::BLACK_QUEEN;
+    return Entity::NONE;
+}
+
+Field::MoveEvent Field::move(int _i1, int _j1, int _i2, int _j2, bool _killed = false)
+{
+    // внутри поля - true; иначе false
+    auto in_field = [&](int _n) -> bool
+    {
+        if (_n < 0 || _n > 7) return false;
+        return true;
+    };
+
+    // если за границами поля
+    if (!in_field(_i1) || !in_field(_i2) || !in_field(_j1) || !in_field(_j2))
+        return MoveEvent::ERR;
+
+    // если клетка пуста или конечная клетка не пуста - ошибка
+    if (m_field[_i1][_j1] == Entity::NONE || m_field[_i2][_j2] != Entity::NONE)
+        return MoveEvent::ERR;
+
+    // если перемещаем не по горизонтали или вертикали
+    if (_i1 != _i2 && _j1 != _j2)
+        return MoveEvent::ERR;
+
+    // для обычной шашки
+    if (m_field[_i1][_j1] == Entity::WHITE || m_field[_i1][_j1] == Entity::BLACK)
+    {
+        // нельзя ходить назад
+        if (_i1 < _i2 && m_field[_i1][_j1] == Entity::WHITE) return MoveEvent::ERR;
+        if (_i1 > _i2 && m_field[_i1][_j1] == Entity::BLACK) return MoveEvent::ERR;
+
+        // если хотим просто сходить
+        if (labs(_i1 - _i2) + labs(_j1 - _j2) == 1)
+        {
+            m_field[_i2][_j2] = m_field[_i1][_j1];
+            m_field[_i1][_j1] = Entity::NONE;
+            this->queenCheck();
+            return MoveEvent::MOVED;
+        }
+
+        // если хотим кого-то съесть
+        if (labs(_i1 - _i2) == 2 || labs(_j1 - _j2) == 2)
+        {
+            // та клетка, где мы съели шашку
+            int i = labs(_i1 + _i2) / 2;
+            int j = labs(_j1 + _j2) / 2;
+
+            // если то что мы съели - не противник
+            if (m_field[i][j] == m_field[_i1][_j1] || m_field[i][j] == this->toQueen(m_field[_i1][_j1])) return MoveEvent::ERR;
+            if (m_field[i][j] == Entity::NONE) return MoveEvent::ERR;
+
+            m_field[_i2][_j2] = m_field[_i1][_j1];
+            m_field[_i1][_j1] = Entity::NONE;
+            m_field[i][j] = Entity::NONE;
+            this->queenCheck();
+            return MoveEvent::KILLED;
+        }
+        // в любом противном случае - ERR
+        return MoveEvent::ERR;
+    }
+
+    // для дамки
+    if (m_field[_i1][_j1] == Entity::WHITE_QUEEN || m_field[_i1][_j1] == Entity::BLACK_QUEEN)
+    {
+        // ходим и едим все что было на пути
+        bool killed = false;
+
+        m_field[_i2][_j2] = m_field[_i1][_j1];
+        m_field[_i1][_j1] = Entity::NONE;
+
+        int i = _i1;
+        int j = _j1;
+
+        // двигаемся
+        while (i != _i2 && j != _j2)
+        {
+            if (i != _i2) i++;
+            if (j != _j2) j++;
+
+            if (m_field[i][j] != Entity::NONE) killed = true;
+            m_field[i][j] = Entity::NONE;
+        }
+
+        // если кого-то съели по пути
+        if (killed) return MoveEvent::KILLED;
+        else return MoveEvent::MOVED;
+    }
+
+    // вдруг дошли сюда - вернули ошибку
+    return MoveEvent::ERR;
+}
+
+void Field::setQueen(int _i, int _j)
+{
+    if (m_field[_i][_j] == Entity::BLACK) m_field[_i][_j] = Entity::BLACK_QUEEN;
+    if (m_field[_i][_j] == Entity::WHITE) m_field[_i][_j] = Entity::WHITE_QUEEN;
+}
+
+void Field::setPlayer(int _color)
+{
+    if (_color)
+    {
+        m_player = Entity::WHITE;
+        m_opponent = Entity::BLACK;
+    }
+    else
+    {
+        m_player = Entity::BLACK;
+        m_opponent = Entity::WHITE;
+    }
+}
+
+void Field::print() const
+{
+    // для выведения границ
+    Outline ol(m_size);
+    ol.print();
+
+    for (int i = 0; i < m_size; i++)
+    {
+        ol.print();
+        for (int j = 0; j < m_size; j++)
+        {
+            if (m_field[i][j] == Entity::NONE) std::cout << ". ";
+            if (m_field[i][j] == Entity::WHITE) std::cout << "X ";
+            if (m_field[i][j] == Entity::BLACK) std::cout << "0 ";
+            if (m_field[i][j] == Entity::WHITE_QUEEN) std::cout << "M ";
+            if (m_field[i][j] == Entity::BLACK_QUEEN) std::cout << "Q ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+int Field::rate() const
+{
+    // итоговое значение оценочной функции
+    int rate_val = 0;
+
+    for (int i = 0; i < m_size; i++)
+        for (int j = 0; j < m_size; j++)
+        {
+            // шашка игрока +1
+            if (m_field[i][j] == m_player) rate_val++;
+
+            // шашака оппонента -1                   
+            if (m_field[i][j] == m_opponent) rate_val--;
+
+            // дамка игрока +3                     
+            if (m_field[i][j] == this->toQueen(m_player)) rate_val += 3;
+
+            // дамка опоннента -3     
+            if (m_field[i][j] == this->toQueen(m_opponent)) rate_val -= 3;
+        }
+
+    return rate_val;
+}
+
+Field Field::MiniMax() const
+{
+    // итоговое самое выгодное поле
+    Field answer;
+
+    // максимальная оценка поля
+    int max_rate = -1000;
+
+    // перебираем все возможные ходы и запускаем от них рекурсивно минимакс
+    for (size_t i1 = 0; i1 < m_size; i1++)
+    {
+        for (size_t j1 = 0; j1 < m_size; j1++)
+        {
+            // если ничего нет - скипаем
+            if (m_field[i1][j1] == Entity::NONE) continue;
+            if (m_field[i1][j1] != m_player && m_field[i1][j1] != this->toQueen(m_player)) continue;
+
+            // вверх-вниз
+            for (size_t i2 = 0; i2 < m_size; i2++)
+            {
+                // копируем текущее поле
+                Field curr = *this;
+
+                // двигаем фишку
+                auto event = curr.move(i1, j1, i2, j1, false);
+
+                // если это невозможно - идем дальше
+                if (event == MoveEvent::ERR) continue;
+
+                // передаем возможный ход в рекурсию
+                int curr_rate;
+                if (event == MoveEvent::MOVED) curr_rate = this->__MiniMax(curr, 1, m_opponent, -1000, 1000, false);
+                else if (event == MoveEvent::KILLED) curr_rate = this->__MiniMax(curr, 1, m_player, -1000, 1000, true);
+
+                // находим самый лучший ход
+                if (max_rate < curr_rate)
+                {
+                    answer = curr;
+                    max_rate = curr_rate;
+                }
+            }
+
+            // влево-вправо
+            for (size_t j2 = 0; j2 < m_size; j2++)
+            {
+                // копируем текущее поле
+                Field curr = *this;
+
+                // двигаем фишку
+                auto event = curr.move(i1, j1, i1, j2, false);
+
+                // если это невозможно - идем дальше
+                if (event == MoveEvent::ERR) continue;
+
+                // передаем возможный ход в рекурсию
+                int curr_rate;
+                if (event == MoveEvent::MOVED) curr_rate = this->__MiniMax(curr, 1, m_opponent, -1000, 1000);
+                else if (event == MoveEvent::KILLED) curr_rate = this->__MiniMax(curr, 1, m_player, -1000, 1000);
+
+                // находим самый лучший ход
+                if (max_rate < curr_rate)
+                {
+                    answer = curr;
+                    max_rate = curr_rate;
+                }
+            }
+        }
+    }
+
+    // возвращаем самый выгодный ход
+    return answer;
+}
+
+Field& Field::operator= (const Field& _other)
+{
+    for (size_t i = 0; i < m_size; i++)
+        for (size_t j = 0; j < m_size; j++)
+            m_field[i][j] = _other.m_field[i][j];
+
+    m_player = _other.m_player;
+    m_opponent = _other.m_opponent;
+    return *this;
+}
+
+int Field::__MiniMax(const Field& _field, const int _depth, const Entity& _player, int _alpha, int _beta, bool _killed) const
+{
+    // если дошли до предела глубины - считаем оценку и выходим
+    if (_depth == m_depth) return _field.rate();
+
+    // кто ходит дальше?
+    Entity new_player = (_player == Entity::WHITE) ? Entity::BLACK : Entity::WHITE;
+
+    // храним min и max
+    int max_rate = -1000;
+    int min_rate = 1000;
+
+    // перебираем все возможные ходы и запускаем от них рекурсивно минимакс
+    for (size_t i1 = 0; i1 < m_size; i1++)
+    {
+        for (size_t j1 = 0; j1 < m_size; j1++)
+        {
+            // если ничего нет - скипаем
+            if (_field.m_field[i1][j1] == Entity::NONE) continue;
+            if (_field.m_field[i1][j1] != _player && _field.m_field[i1][j1] != this->toQueen(_player)) continue;
+
+            // вверх-вниз
+            for (size_t i2 = 0; i2 < m_size; i2++)
+            {
+                Field curr = _field;
+
+                // ходим
+                auto event = curr.move(i1, j1, i2, j1, _killed);
+                if (event == MoveEvent::ERR) continue;
+
+                // идем дальше в глубину
+                int curr_rate;
+                if (event == MoveEvent::MOVED) curr_rate = this->__MiniMax(curr, _depth + 1, new_player, _alpha, _beta, false);
+                else if (event == MoveEvent::KILLED) curr_rate = this->__MiniMax(curr, _depth + 1, _player, _alpha, _beta, true);
+
+                // min и max
+                if (max_rate < curr_rate) max_rate = curr_rate;
+                if (min_rate > curr_rate) min_rate = curr_rate;
+
+                if (_player == m_player) _alpha = std::max(_alpha, curr_rate);
+                else _beta = std::min(_beta, curr_rate);
+
+                if (_beta < _alpha) break;
+            }
+
+            // влево-вправо
+            for (size_t j2 = 0; j2 < m_size; j2++)
+            {
+                Field curr = _field;
+
+                // ходим
+                auto event = curr.move(i1, j1, i1, j2, _killed);
+                if (event == MoveEvent::ERR) continue;
+
+                // идем дальше в глубину
+                int curr_rate;
+                if (event == MoveEvent::MOVED) curr_rate = this->__MiniMax(curr, _depth + 1, new_player, _alpha, _beta, false);
+                else if (event == MoveEvent::KILLED) curr_rate = this->__MiniMax(curr, _depth + 1, _player, _alpha, _beta, true);
+
+                // min и max
+                if (max_rate < curr_rate) max_rate = curr_rate;
+                if (min_rate > curr_rate) min_rate = curr_rate;
+
+                if (_player == m_player) _alpha = std::max(_alpha, curr_rate);
+                else _beta = std::min(_beta, curr_rate);
+
+                if (_beta < _alpha) break;
+            }
+        }
+    }
+    // смотрим чей был ход и в зависимости от этого возвращаем либо минимум, либо максимум
+    if (_player == m_player) return max_rate;
+    else return min_rate;
+}
+
+size_t Field::whiteCount() const
+{
+    size_t ans = 0;
+    for (int i = 0; i < m_size; i++)
+        for (int j = 0; j < m_size; j++)
+            if (m_field[i][j] == Entity::WHITE || m_field[i][j] == Entity::WHITE_QUEEN) ans++;
+    return ans;
+}
+size_t Field::blackCount() const
+{
+    size_t ans = 0;
+    for (int i = 0; i < m_size; i++)
+        for (int j = 0; j < m_size; j++)
+            if (m_field[i][j] == Entity::BLACK || m_field[i][j] == Entity::BLACK_QUEEN) ans++;
+    return ans;
+}
+void Field::queenCheck()
+{
+    for (size_t i = 0; i < m_size; i++)
+    {
+        m_field[0][i] = this->toQueen(m_field[0][i]);
+        m_field[m_size - 1][i] = this->toQueen(m_field[m_size - 1][i]);
+    }
+}
+Field.h
+#ifndef FIELD_H
+#define FIELD_H
+
+#include "outline.h"
+
+#include <cmath>
+#include <iostream>
+#include <functional>
+
+// класс поля
+class Field
+{
+private:
+    // перечисление сущностей, допустимых в клетке
+    enum class Entity
+    {
+        NONE = 0,
+        WHITE = 1,
+        BLACK = 2,
+        WHITE_QUEEN = 3,
+        BLACK_QUEEN = 4
+    };
+
+    // само игровое поле
+    Entity** m_field;
+
+    // за кого играет пользователь и его оппонент
+    Entity m_player;
+    Entity m_opponent;
+
+    // размер поля 8x8
+    const int m_size = 8;
+
+    // глубина ходов
+    const int m_depth = 3;
+
+    // вернет сусщность дамки цвета отданной шашки
+    Entity toQueen(const Entity& _entity) const;
+
+    // метод рекурсивного вызова
+    int __MiniMax(const Field& _field, const int _depth, const Entity& _player, int _alpha, int _beta, bool _killed = false) const;
+
+    // проверка на дамок
+    void queenCheck();
+
+public:
+    // описание событий, которые могут возникнуть после перемещения шашки
+    enum class MoveEvent
+    {
+        ERR = -1,
+        MOVED = 0,
+        KILLED = 1
+    };
+
+    // конструктор по умолчанию
+    Field();
+
+    // конструктор копирование
+    Field(const Field& _other);
+
+    // деструктор по умолчанию
+    ~Field();
+
+    // перемещает шашку
+    MoveEvent move(int _i1, int _j1, int _i2, int _j2, bool _killed);
+
+    // делает из шашки дамку
+    void setQueen(int _i, int _j);
+
+    // 0 - black, 1 - white
+    void setPlayer(int _color);
+
+    // метод вывода
+    void print() const;
+
+    // оценочная функция
+    int rate() const;
+
+    // МиниМакс - вернет наилучшее поле
+    Field MiniMax() const;
+
+    // подсчет шашек
+    size_t whiteCount() const;
+    size_t blackCount() const;
+
+    Field& operator= (const Field& _other);
+};
+
+#endif // FIELD_H#pragma once
+
+outline.h
+#pragma once
+#ifndef OUTLINE_H
+#define OUTLINE_H
+
+#include <iostream>
+
+// класс для выведения границ поля
+class Outline
+{
+private:
+    // счетчик
+    int m_count = 0;
+
+    // максимум
+    int m_max;
+
+public:
+
+    // удаляем конструктор по умолчанию
+    Outline() = delete;
+    explicit Outline(int _max);
+
+    ~Outline() = default;
+    void print();
+};
+
+#endif // OUTLINE_H
+outline.cpp
+#include "outline.h"
+
+Outline::Outline(int _max) : m_max(_max)
+{
+}
+
+void Outline::print()
+{
+    if (!m_count)
+    {
+        m_count++;
+        std::cout << 'X';
+        for (int i = 0; i < m_max; i++) std::cout << ' ' << i;
+        std::cout << std::endl;
+    }
+    else
+    {
+        std::cout << m_count - 1 << ' ';
+        m_count++;
+    }
+}
