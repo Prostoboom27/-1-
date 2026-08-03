@@ -1,0 +1,429 @@
+
+Задание №1.2 
+Реализовать алгоритм шифрования данных «Биграммный шифр Плейфейра».
+
+
+ТЕКСТ ПРОГРАММЫ
+class PlayfairCipher:
+    def __init__(self, key):
+        # Алфавит для шифрования
+        self.alph = "абвгдежзийклмнопрстуфхцчшщъыьэюя"
+        # Создание матрицы на основе ключа
+        self.matrix = self.create_matrix(key)
+        # Вывод матрицы
+        self.print_matrix()
+
+    def create_matrix(self, key):
+        # Удаление дубликатов из ключа и сохранение их порядка
+        key = ''.join(sorted(set(key), key=key.index))
+        # Расширение алфавита с добавлением оставшихся букв не входящих в ключ
+        extended_alph = key + ''.join([ch for ch in self.alph if ch not in key])
+        # Создание 5x5 матрицы
+        return [list(extended_alph[i:i+5]) for i in range(0, 25, 5)]
+
+    def print_matrix(self):
+        # Вывод матрицы
+        for row in self.matrix:
+            print(' '.join(row))
+
+    def prepare_text(self, text):
+        # Преобразование текста в нижний регистр и удаление пробелов
+        text = text.lower().replace(" ", "")
+        # Если длина текста нечетная, добавление заполнителя 'ъ'
+        if len(text) % 2 != 0:
+            text += 'ъ'
+        return text
+
+    def find_position(self, char):
+        # Поиск позиции символа в матрице
+        for i, row in enumerate(self.matrix):
+            if char in row:
+                return (i, row.index(char))
+        return None  # Возвращает None, если символ не найден
+
+    def encrypt_pair(self, pair):
+        # Находим позиции символов пары
+        pos1 = self.find_position(pair[0])
+        pos2 = self.find_position(pair[1])
+
+        if pos1 and pos2:  # Проверяем, что позиции найдены
+            if pos1[0] == pos2[0]:  # Одинаковая строка
+                return self.matrix[pos1[0]][(pos1[1] + 1) % 5], self.matrix[pos2[0]][(pos2[1] + 1) % 5]
+            elif pos1[1] == pos2[1]:  # Одинаковый столбец
+                return self.matrix[(pos1[0] + 1) % 5][pos1[1]], self.matrix[(pos2[0] + 1) % 5][pos2[1]]
+            else:  # Прямоугольник
+                return self.matrix[pos1[0]][pos2[1]], self.matrix[pos2[0]][pos1[1]]
+        return None, None  # Возвращает None, если позиции не найдены
+
+    def decrypt_pair(self, pair):
+        # Находим позиции символов пары
+        pos1 = self.find_position(pair[0])
+        pos2 = self.find_position(pair[1])
+
+        if pos1 and pos2:  # Проверяем, что позиции найдены
+            if pos1[0] == pos2[0]:  # Одинаковая строка
+                return self.matrix[pos1[0]][(pos1[1] - 1) % 5], self.matrix[pos2[0]][(pos2[1] - 1) % 5]
+            elif pos1[1] == pos2[1]:  # Одинаковый столбец
+                return self.matrix[(pos1[0] - 1) % 5][pos1[1]], self.matrix[(pos2[0] - 1) % 5][pos2[1]]
+            else:  # Прямоугольник
+                return self.matrix[pos1[0]][pos2[1]], self.matrix[pos2[0]][pos1[1]]
+        return None, None  # Возвращает None, если позиции не найдены
+
+    def encrypt(self, plaintext):
+        # Подготавливаем текст к шифрованию
+        plaintext = self.prepare_text(plaintext)
+        encrypted = []
+        for i in range(0, len(plaintext), 2):
+            pair = plaintext[i:i+2]
+            enc1, enc2 = self.encrypt_pair(pair)
+            if enc1 and enc2:
+                encrypted.extend([enc1, enc2])
+            else:
+                encrypted.extend([pair[0], pair[1]])  # Запасной вариант в случае ошибки
+        return ''.join(encrypted)
+
+    def decrypt(self, ciphertext):
+        # Подготавливаем текст к расшифровке
+        plaintext = self.prepare_text(ciphertext)
+        decrypted = []
+        for i in range(0, len(plaintext), 2):
+            pair = plaintext[i:i+2]
+            dec1, dec2 = self.decrypt_pair(pair)
+            if dec1 and dec2:
+                decrypted.extend([dec1, dec2])
+            else:
+                decrypted.extend([pair[0], pair[1]])  # Запасной вариант в случае ошибки
+        return ''.join(decrypted)
+
+# Пример использования
+key = "нгту"
+cipher = PlayfairCipher(key)
+
+plaintext = "Нижегородский государственный технический университет"
+ciphertext = cipher.encrypt(plaintext)
+decrypted = cipher.decrypt(ciphertext)
+print(f"Зашифрованный текст: {ciphertext}", f"Расшифрованный текст: {decrypted}")
+
+
+
+Текст задания: Реализовать алгоритм шифрования данных «Шифрование методом гаммирования» по модулю N.	
+
+
+
+Текст программы с комментариями:
+
+# Определяем алфавит, используемый для шифрования и расшифровки
+ALPHABET = [
+    'А', 'Б', 'В', 'Г', 'Д', 'Е','Ё', 'Ж', 'З', 'И', 'Й', 'К', 'Л', 'М', 'Н', 'О', 'П',
+    'Р', 'С', 'Т', 'У', 'Ф', 'Х', 'Ц', 'Ч', 'Ш', 'Щ', 'Ъ', 'Ы', 'Ь', 'Э', 'Ю', 'Я', ' '
+]
+
+#Генерация числового ключа на основе ключевого слова.
+def generate_key_numbers(message, keyword):
+    key = []  # Список для хранения числового представления ключа
+    # Расширяем ключевое слово до длины сообщения
+    while len(keyword) < len(message):
+        keyword += keyword
+    keyword = keyword[:len(message)]
+
+    # Преобразуем каждую букву ключевого слова в индекс алфавита
+    for char in keyword:
+        key.append(ALPHABET.index(char))
+
+    return key  # Возвращаем ключ в виде списка чисел
+
+    #Шифрование сообщения с использованием ключа.
+def generate_code(message, key):
+    encoded_message = []  # Список для хранения зашифрованного сообщения
+    for i in range(len(message)):
+        # Если символ отсутствует в алфавите, добавляем его как есть
+        if message[i] not in ALPHABET:
+            encoded_message.append(message[i])
+            continue
+        original_index = ALPHABET.index(message[i])  # Индекс символа в алфавите
+        new_index = (original_index + key[i]) % len(ALPHABET)  # Новый индекс
+        encoded_message.append(ALPHABET[new_index])  # Добавляем зашифрованный символ
+    return ''.join(encoded_message)  # Объединяем список символов в строку
+
+    #Расшифровка сообщения с использованием ключа.
+def generate_decode(message, key):
+    decoded_message = []  # Список для хранения расшифрованного сообщения
+    for i in range(len(message)):
+        # Если символ отсутствует в алфавите, добавляем его как есть
+        if message[i] not in ALPHABET:
+            decoded_message.append(message[i])
+            continue
+        encrypted_index = ALPHABET.index(message[i])
+        new_index = (encrypted_index - key[i]) % len(ALPHABET)
+        decoded_message.append(ALPHABET[new_index])  #
+    return ''.join(decoded_message)
+
+
+def main():
+    # Исходное сообщение для шифрования
+    message = "Антон Павлов".upper()
+    # Ключевое слово для шифрования
+    keyword = "КЛЮЧ".upper()
+
+    print("Исходное сообщение:", message)
+    print("Ключевое слово:", keyword)
+
+    # Генерируем числовой ключ на основе сообщения и ключевого слова
+    key = generate_key_numbers(message, keyword)
+    print("Числовой ключ:", key)
+
+    # Шифрование сообщения
+    encoded_message = generate_code(message, key)
+    print("Зашифрованное сообщение:", encoded_message)
+
+    # Расшифровка сообщения
+    decoded_message = generate_decode(encoded_message, key)
+    print("Расшифрованное сообщение:", decoded_message)
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+Реализовать алгоритм шифрования данных (Реализовать стандарт шифрования данных DES в режиме «Обратная связь по выходу»)
+
+
+
+Текст программы:
+from Crypto.Cipher import DES
+from Crypto.Random import get_random_bytes
+
+def des_ofb_encrypt(plaintext, key, iv):
+    """
+    Encrypt plaintext using DES in OFB mode.
+
+    :param plaintext: The plaintext to encrypt (bytes)
+    :param key: The DES key (8 bytes)
+    :param iv: The initialization vector (8 bytes)
+    :return: The ciphertext (bytes)
+    """
+    cipher = DES.new(key, DES.MODE_OFB, iv)
+    ciphertext = cipher.encrypt(plaintext)
+    return ciphertext
+
+def des_ofb_decrypt(ciphertext, key, iv):
+    """
+    Decrypt ciphertext using DES in OFB mode.
+
+    :param ciphertext: The ciphertext to decrypt (bytes)
+    :param key: The DES key (8 bytes)
+    :param iv: The initialization vector (8 bytes)
+    :return: The plaintext (bytes)
+    """
+    cipher = DES.new(key, DES.MODE_OFB, iv)
+    plaintext = cipher.decrypt(ciphertext)
+    return plaintext
+
+# Example usage
+if __name__ == "__main__":
+    # Input DES key and IV
+    key = input("Enter an 8-byte key (exactly 8 characters): ").encode('utf-8')
+    if len(key) != 8:
+        raise ValueError("Key must be exactly 8 bytes long.")
+
+    iv = input("Enter an 8-byte IV (exactly 8 characters): ").encode('utf-8')
+    if len(iv) != 8:
+        raise ValueError("IV must be exactly 8 bytes long.")
+
+    # Input plaintext
+    plaintext = input("Enter the plaintext: ").encode('utf-8')
+
+    print(f"Original plaintext: {plaintext}")
+
+    # Encrypt the plaintext
+    ciphertext = des_ofb_encrypt(plaintext, key, iv)
+    print(f"Ciphertext: {ciphertext}")
+
+    # Decrypt the ciphertext
+    decrypted_plaintext = des_ofb_decrypt(ciphertext, key, iv)
+    print(f"Decrypted plaintext: {decrypted_plaintext}")
+
+    # Verify the result
+    assert plaintext == decrypted_plaintext, "Decryption failed!"
+
+
+
+
+
+Реализовать алгоритм шифрования данных RSA
+
+
+
+
+Текст программы:
+import numpy as np
+
+# Алфавит для простого определения числового эквивалента символов
+alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ,.1234567890"
+
+# Функция нахождения наибольшего общего делителя (НОД)
+def GCD(a, b):
+    """
+    Вычисляет наибольший общий делитель двух чисел a и b.
+    """
+    while a != 0 and b != 0:
+        if a > b:
+            a = a % b
+        else:
+            b = b % a
+    return a + b
+
+# Ввод шифруемого сообщения
+user_string = input("Введите сообщение для шифрования:\n")
+
+# Ввод двух простых чисел p и q
+print("Введите два простых числа (p и q):")
+p = int(input("p: "))
+q = int(input("q: "))
+
+# Вычисление модуля n (произведение двух введённых простых чисел)
+n = p * q
+
+# Вычисление значения функции Эйлера \u03C6(n) = (p-1)*(q-1)
+phi = (p - 1) * (q - 1)
+
+# Выбор открытой экспоненты e (взаимно простое с \u03C6(n))
+e = 3
+while GCD(e, phi) != 1:
+    e += 2
+
+# Вычисление закрытой экспоненты d (обратное к e по модулю \u03C6(n))
+d = 0
+i = 1
+while True:
+    if (i * e) % phi == 1:
+        d = i
+        break
+    i += 1
+
+# Вывод открытого и закрытого ключей
+print(f"Открытый ключ: {{e = {e}, n = {n}}}")
+print(f"Закрытый ключ: {{d = {d}, n = {n}}}")
+
+# Зашифрование текста
+encoded_string = []
+for char in user_string:
+    num_sym_in_alphabet = alphabet.find(char)
+    enc_sym = (num_sym_in_alphabet ** e) % n
+    encoded_string.append(enc_sym)
+
+print("Зашифрованное сообщение:", encoded_string)
+
+# Расшифрование текста
+decoded_string = ""
+for enc_sym in encoded_string:
+    num_sym_in_alphabet = (enc_sym ** d) % n
+    decoded_string += alphabet[num_sym_in_alphabet]
+
+print("Расшифрованное сообщение:", decoded_string)
+
+
+
+
+
+Ознакомиться с концепцией электронной цифровой подписи,  программно реализовать алгоритм формирования электронной цифровой подписи и проверки ее подлинности.
+
+
+
+
+
+
+import numpy as np
+
+# Алфавит для более простого определения числового эквивалента символов
+alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ,.1234567890"
+
+# Функция нахождения наибольшего общего делителя
+def GCD(a, b):
+    while a != 0 and b != 0:
+        if a > b:
+            a = a % b
+        else:
+            b = b % a
+    return a + b
+
+# Функция генерации ключей RSA
+def generate_keys(p, q):
+    n = p * q
+    phi = (p - 1) * (q - 1)
+
+    # Поиск открытого ключа e
+    e = 37
+    while GCD(e, phi) != 1:
+        e += 1
+
+    # Поиск закрытого ключа d
+    d = 0
+    i = 0
+    while True:
+        if (i * e) % phi == 1:
+            d = i
+            break
+        i += 1
+
+    return (e, n), (d, n)
+
+# Функция создания цифровой подписи
+def sign_message(m, d, n):
+    # Вычисление подписи s = m^d mod n
+    return pow(m, d, n)
+
+# Функция проверки цифровой подписи
+def verify_signature(m, s, e, n):
+    # Проверка подписи: m' = s^e mod n
+    m_prime = pow(s, e, n)
+    return m == m_prime
+
+# Функция шифрования сообщения
+def encrypt_message(message, e, n):
+    return [pow(alphabet.find(char), e, n) for char in message]
+
+# Функция расшифрования сообщения
+def decrypt_message(encoded_message, d, n):
+    return ''.join(alphabet[pow(enc, d, n)] for enc in encoded_message)
+
+# Основная часть программы
+
+# Пример значений p и q для генерации ключей (должны быть простыми числами)
+p = 11
+q = 13
+
+# Генерация ключей RSA
+public_key, private_key = generate_keys(p, q)
+e, n = public_key
+d, _ = private_key
+
+print("Open key:", public_key)
+print("Closed key:", private_key)
+
+# Значение хэш-функции (дано в таблице)
+m = 15
+
+# Подпись сообщения
+s = sign_message(m, d, n)
+print(f"Signature for hash {m} is: {s}")
+
+# Проверка подписи для значений из таблицы
+test_cases = [(46, 85), (16, 74), (129, 116)]
+for m_test, s_test in test_cases:
+    is_valid = verify_signature(m_test, s_test, e, n)
+    print(f"Verification for message hash {m_test} and signature {s_test}: {'Valid' if is_valid else 'Invalid'}")
+
+# Дополнительная часть (если нужно зашифровать и расшифровать сообщение для проверки):
+user_string = input("Enter message:\n")
+
+# Шифрование текста
+encoded_string = encrypt_message(user_string, e, n)
+print("Encoded string:", encoded_string)
+
+# Расшифрование текста
+decoded_string = decrypt_message(encoded_string, d, n)
+print("Decoded string:", decoded_string)
+
+
