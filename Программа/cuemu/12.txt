@@ -1,0 +1,21 @@
+cl
+clc
+am f2
+sm t
+cmd 8 38 41 42 43 44 48
+cmd 1 1 6 11 18 25 30 42 47
+cmd 2 26 31 35 41 42 46 47
+cmd 3 2 7 35 43 48
+cmd 4 38 39 42 43 46 48
+cmd 5 4 10 12 19 24 42 43 47 48
+cmd 6 9 33 41 42 43 46 47 48
+cmd 7 37 44 49
+cmd 15 1 6 25 30 45 50
+link COUNT C1
+link G9 C3
+seta 0 0
+setb 0 0
+sets 0 0
+setm 10100000
+setma 2
+setc 0
